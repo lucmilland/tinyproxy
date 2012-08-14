@@ -32,6 +32,7 @@
 #include "buffer.h"
 #include "conns.h"
 #include "filter.h"
+#include "remotefilter.h"
 #include "hashmap.h"
 #include "heap.h"
 #include "html-error.h"
@@ -486,6 +487,26 @@ BAD_REQUEST_ERROR:
                         goto fail;
                 }
         }
+#endif
+
+#ifdef REMOTE_FILTER_ENABLE
+        /*
+         * Check with remote-filter
+         */
+	ret = remote_filter(request, url, connptr);
+	if (ret) {
+	  update_stats (STAT_DENIED);
+
+	  log_message (LOG_NOTICE,
+		       "Proxying refused by remote filter");
+
+	  indicate_http_error (connptr, 403, "Filtered",
+			       "detail",
+			       "The request you made has been filtered",
+			       "url", url, NULL);
+	  goto fail;
+	}
+
 #endif
 
 

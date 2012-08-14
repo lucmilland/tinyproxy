@@ -131,6 +131,19 @@ if test x"$transparent_enabled" = x"yes"; then
    AC_DEFINE(TRANSPARENT_PROXY)
 fi
 
+dnl Include remote squidGuard filtering
+AH_TEMPLATE([REMOTE_FILTER_ENABLE],
+	    [Defined if you would like remote squidGuard filtering code included.])
+TP_ARG_ENABLE(remote_filter,
+              [Enable remote squidGuard filtering (default is NO)],
+              no)
+
+if test x"$remote_filter_enabled" = x"yes"; then
+    ADDITIONAL_OBJECTS="$ADDITIONAL_OBJECTS remotefilter.o"
+    AC_DEFINE(REMOTE_FILTER_ENABLE)
+    AC_CHECK_LIB(zmq, zmq_init)
+fi
+
 dnl Check for broken regex library
 TP_ARG_ENABLE(regexcheck,
               [Check for working regex library (default is YES)],
