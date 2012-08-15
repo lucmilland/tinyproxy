@@ -987,8 +987,11 @@ static HANDLE_FUNC (handle_filterdefaultdeny)
 {
         assert (match[2].rm_so != -1);
 
-        if (get_bool_arg (line, &match[2]))
+	set_bool_arg (&conf->filter_defaultdeny, line, &match[2]);
+
+        if (get_bool_arg (line, &match[2])) {
                 filter_set_default_policy (FILTER_DEFAULT_DENY);
+	}
         return 0;
 }
 

@@ -467,47 +467,57 @@ BAD_REQUEST_ERROR:
                         ret = filter_url (url);
                 else
                         ret = filter_domain (request->host);
-
                 if (ret) {
-                        update_stats (STAT_DENIED);
 
-                        if (config.filter_url)
-                                log_message (LOG_NOTICE,
-                                             "Proxying refused on filtered url \"%s\"",
-                                             url);
-                        else
-                                log_message (LOG_NOTICE,
-                                             "Proxying refused on filtered domain \"%s\"",
-                                             request->host);
+		  if (!config.filter_defaultdeny) {
+		    /*
+		     * Blacklist check failed
+		     */
+		    update_stats (STAT_DENIED);
 
-                        indicate_http_error (connptr, 403, "Filtered",
-                                             "detail",
-                                             "The request you made has been filtered",
-                                             "url", url, NULL);
-                        goto fail;
-                }
-        }
-#endif
+		    if (config.filter_url)
+		      log_message (LOG_NOTICE,
+				   "Proxying refused on filtered url \"%s\"",
+				   url);
+		    else
+		      log_message (LOG_NOTICE,
+				   "Proxying refused on filtered domain \"%s\"",
+				   request->host);
+
+		    indicate_http_error (connptr, 403, "Filtered",
+					 "detail",
+					 "The request you made has been filtered",
+					 "url", url, NULL);
+		    goto fail;
+
+		  }
 
 #ifdef REMOTE_FILTER_ENABLE
-        /*
-         * Check with remote-filter
-         */
-	ret = remote_filter(request, url, connptr);
-	if (ret) {
-	  update_stats (STAT_DENIED);
+		  else {
+		    /*
+		     * Whitelist check failed : try with remote-filter
+		     */
+		    ret = remote_filter(request, url, connptr);
+		    if (ret) {
+		      update_stats (STAT_DENIED);
 
-	  log_message (LOG_NOTICE,
-		       "Proxying refused by remote filter");
+		      log_message (LOG_NOTICE,
+				   "Proxying refused by remote filter");
 
-	  indicate_http_error (connptr, 403, "Filtered",
-			       "detail",
-			       "The request you made has been filtered",
-			       "url", url, NULL);
-	  goto fail;
-	}
+		      indicate_http_error (connptr, 403, "Filtered",
+					   "detail",
+					   "The request you made has been filtered",
+					   "url", url, NULL);
+		      goto fail;
+		    }
+		  }
+#endif /* REMOTE_FILTER_ENABLE */
 
-#endif
+                }
+        }
+
+#endif /* FILTER_ENABLE */
+
 
 
         /*

@@ -78,7 +78,7 @@ static int hashfunc (const char *key, unsigned int size, uint32_t seed)
                 return -ERANGE;
 
         for (hash = seed; *key != '\0'; key++) {
-                uint32_t bit = (hash & 1) ? (1 << (sizeof (uint32_t) - 1)) : 0;
+                uint32_t bit = (hash & 1) ? (1 << (sizeof (uint32_t) * 8 - 1)) : 0;
 
                 hash >>= 1;
 
