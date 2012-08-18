@@ -131,6 +131,9 @@ static HANDLE_FUNC (handle_filterdefaultdeny);
 static HANDLE_FUNC (handle_filterextended);
 static HANDLE_FUNC (handle_filterurls);
 #endif
+#ifdef REMOTE_FILTER_ENABLE
+static HANDLE_FUNC (handle_remotefilter);
+#endif
 static HANDLE_FUNC (handle_group);
 static HANDLE_FUNC (handle_listen);
 static HANDLE_FUNC (handle_logfile);
@@ -240,6 +243,10 @@ struct {
         STDCONF ("filterextended", BOOL, handle_filterextended),
         STDCONF ("filterdefaultdeny", BOOL, handle_filterdefaultdeny),
         STDCONF ("filtercasesensitive", BOOL, handle_filtercasesensitive),
+#endif
+#ifdef REMOTE_FILTER_ENABLE
+	/* remote filter */
+	STDCONF ("remotefilter", STR, handle_remotefilter),
 #endif
 #ifdef REVERSE_SUPPORT
         /* Reverse proxy arguments */
@@ -998,6 +1005,12 @@ static HANDLE_FUNC (handle_filterdefaultdeny)
 static HANDLE_FUNC (handle_filtercasesensitive)
 {
         return set_bool_arg (&conf->filter_casesensitive, line, &match[2]);
+}
+#endif
+#ifdef REMOTE_FILTER_ENABLE
+static HANDLE_FUNC (handle_remotefilter)
+{
+        return set_string_arg (&conf->remotefilter, line, &match[2]);
 }
 #endif
 

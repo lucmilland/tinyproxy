@@ -54,6 +54,10 @@ struct config_s {
         unsigned int filter_casesensitive;      /* boolean */
         unsigned int filter_defaultdeny;      /* boolean */
 #endif                          /* FILTER_ENABLE */
+#ifdef REMOTE_FILTER_ENABLE
+        char *remotefilter;
+#endif                          /* REMOTE_FILTER_ENABLE */
+
 #ifdef XTINYPROXY_ENABLE
         unsigned int add_xtinyproxy; /* boolean */
 #endif

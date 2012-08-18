@@ -91,10 +91,10 @@ static int s_sendmore (void *sock, const char *string) {
  */
 void remote_filter_init (void)
 {
-  if (!already_init) {
+  if (!already_init && config.remotefilter) {
     context = zmq_init (1);
     requester = zmq_socket (context, ZMQ_REQ);
-    zmq_connect (requester, "tcp://localhost:5555");
+    zmq_connect (requester, config.remotefilter);
     already_init = 1;
   }
 }
