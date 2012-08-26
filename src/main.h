@@ -25,7 +25,7 @@
 #include "common.h"
 
 /* Global variables for the main controls of the program */
-#define MAXBUFFSIZE     ((size_t)(1024 * 96))   /* Max size of buffer */
+#define MAXBUFFSIZE     ((size_t)(1024 * 24))   /* Max size of buffer */
 #define MAX_IDLE_TIME   (60 * 10)       /* 10 minutes of no activity */
 
 /* Global Structures used in the program */

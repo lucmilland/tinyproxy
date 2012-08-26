@@ -56,7 +56,7 @@ static char *s_recv (void *sock) {
     string = (char *)malloc (size + 1);
     memcpy (string, zmq_msg_data (&message), size);
     zmq_msg_close (&message);
-    string [size] = 0;
+    string[size] = '\0';
     return (string);
 }
 
@@ -109,13 +109,13 @@ void remote_filter_destroy (void)
   }
 }
 
-/* Return 0 to allow, non-zero to block */
-int remote_filter (struct request_s *request, const char *url, struct conn_s *connptr)
+/* Return NULL to allow, non-NULL to redirect */
+char *remote_filter (struct request_s *request, const char *url, struct conn_s *connptr)
 {
   char* reply;
 
   if (!already_init)
-    goto COMMON_EXIT;
+    return (char *)NULL;
 
   /* printf ("filtering: %s %s %s %d/%s\n", request->host, request->method,
      request->protocol, request->port, request->path); */
@@ -132,19 +132,14 @@ int remote_filter (struct request_s *request, const char *url, struct conn_s *co
   } else {
     if (strlen(reply) != 0) {
       /* squidGuard said "filter this" */
-      free(reply);
-      return 1;
+      return reply;
     } else {
       free(reply);
-      return 0;
+      return (char *)NULL;
     }
   }
+  return (char *)NULL;
 
-COMMON_EXIT:
-        if (default_policy == REMOTE_FILTER_DEFAULT_ALLOW)
-                return 0;
-        else
-                return 1;
 }
 
 /*

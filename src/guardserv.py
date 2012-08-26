@@ -24,4 +24,4 @@ while True:
     
     socket.send(id, zmq.SNDMORE)
     socket.send("", zmq.SNDMORE)
-    socket.send(out)
+    socket.send(out.split(' ')[0])

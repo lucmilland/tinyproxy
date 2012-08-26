@@ -319,13 +319,15 @@ static int send_ssl_response (struct conn_s *connptr)
  * build a new request line. Finally connect to the remote server.
  */
 static struct request_s *process_request (struct conn_s *connptr,
-                                          hashmap_t hashofheaders)
+                                          hashmap_t hashofheaders, int dofilter)
 {
         char *url;
         struct request_s *request;
         int ret;
         size_t request_len;
-
+#ifdef REMOTE_FILTER_ENABLE
+	char *filtered;
+#endif
         /* NULL out all the fields so frees don't cause segfaults. */
         request =
             (struct request_s *) safecalloc (1, sizeof (struct request_s));
@@ -462,7 +464,7 @@ BAD_REQUEST_ERROR:
         /*
          * Filter restricted domains/urls
          */
-        if (config.filter) {
+        if (config.filter && dofilter) {
                 if (config.filter_url)
                         ret = filter_url (url);
                 else
@@ -497,18 +499,21 @@ BAD_REQUEST_ERROR:
 		    /*
 		     * Whitelist check failed : try with remote-filter
 		     */
-		    ret = remote_filter(request, url, connptr);
-		    if (ret) {
-		      update_stats (STAT_DENIED);
+		    filtered = remote_filter(request, url, connptr);
+		    log_message (LOG_INFO, "Filtering 1: \"%s\"", filtered);
+		    if (filtered) {
+		      /* redirect to 'filtered' */
+		      
+		      safefree(url);
+		      free_request_struct (request);
+		      safefree(connptr->request_line);
+		      connptr->request_line = (char *)safemalloc(strlen(filtered) + 14);
+		      sprintf(connptr->request_line, "GET %s HTTP/1.0", filtered);
+		      free(filtered);
 
-		      log_message (LOG_NOTICE,
-				   "Proxying refused by remote filter");
-
-		      indicate_http_error (connptr, 403, "Filtered",
-					   "detail",
-					   "The request you made has been filtered",
-					   "url", url, NULL);
-		      goto fail;
+		      log_message (LOG_INFO, "Filtering 2 :\"%s\"", connptr->request_line);
+		      /* recurse once with rewritten url */
+		      return process_request(connptr, hashofheaders, 0);
 		    }
 		  }
 #endif /* REMOTE_FILTER_ENABLE */
@@ -1498,7 +1503,7 @@ void handle_connection (int fd)
                                 header->value, strlen (header->value) + 1);
         }
 
-        request = process_request (connptr, hashofheaders);
+        request = process_request (connptr, hashofheaders, 1);
         if (!request) {
                 if (!connptr->show_stats) {
                         update_stats (STAT_BADCONN);

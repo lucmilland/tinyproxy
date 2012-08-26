@@ -136,8 +136,8 @@ int write_message (int fd, const char *fmt, ...)
  * Returns the length of the buffer on success (not including the NULL
  * termination), 0 if the socket was closed, and -1 on all other errors.
  */
-#define SEGMENT_LEN (512)
-#define MAXIMUM_BUFFER_LENGTH (128 * 1024)
+#define SEGMENT_LEN (256)
+#define MAXIMUM_BUFFER_LENGTH (64 * 1024)
 ssize_t readline (int fd, char **whole_buffer)
 {
         ssize_t whole_buffer_len;
