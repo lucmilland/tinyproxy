@@ -3,25 +3,63 @@
 import zmq
 import random
 import subprocess
+import threading
+from time import sleep
 
-context = zmq.Context()
-socket = context.socket(zmq.ROUTER)
-socket.bind("tcp://*:5555")
+# number of squidguard processes
+WORKER_THREADS = 3
 
-guard = subprocess.Popen('squidGuard', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+worker_addr = "inproc://squidguard"
 
-while True:
-    id = socket.recv()
-    socket.recv() # empty message frame REQ 
-    client_ip = socket.recv()
-    client_fqdn = socket.recv()
-    method = socket.recv()
-    query = socket.recv()
-    print '%s %s/%s - %s\n' % (query, client_ip, client_fqdn, method)
-    guard.stdin.write('%s %s/%s - %s\n' % (query, client_ip, client_fqdn, method))
-    out = guard.stdout.readline().strip()
-    print "result : [%s]" % out
+def guard_worker(context, terminate):
+
+    guard = subprocess.Popen('squidGuard', stdin=subprocess.PIPE, 
+                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+    # socket to talk to dispatcher
+    socket = context.socket(zmq.REP)
+    socket.connect(worker_addr)
+
+    while not terminate.is_set():
+        try:
+            client_ip, client_fqdn, method, query = socket.recv_multipart()
+        except zmq.ZMQError:
+            continue
+        print '%s %s/%s - %s' % (query, client_ip, client_fqdn, method)
+        guard.stdin.write('%s %s/%s - %s\n' % (query, client_ip, client_fqdn, method))
+        out = guard.stdout.readline().strip()
+        print "result : [%s]" % out
     
-    socket.send(id, zmq.SNDMORE)
-    socket.send("", zmq.SNDMORE)
-    socket.send(out.split(' ')[0])
+        #socket.send(id, zmq.SNDMORE)
+        #socket.send("", zmq.SNDMORE)
+        socket.send(out.split(' ')[0])
+
+
+context = zmq.Context(1)
+
+# socket to talk to clients
+clients = context.socket(zmq.ROUTER)
+clients.bind("tcp://*:5555")
+
+# socket to talk to workers
+guards = context.socket(zmq.DEALER)
+guards.bind(worker_addr)
+
+terminate = threading.Event()
+
+for i in range(WORKER_THREADS):
+    thread = threading.Thread(target=guard_worker, args=(context, terminate))
+    thread.start()
+
+try:
+    zmq.device(zmq.QUEUE, clients, guards)
+except:
+    pass
+
+terminate.set()
+sleep(1) # wait threads to terminate
+clients.close()
+guards.close()
+context.term()
+
+
