@@ -133,6 +133,7 @@ static HANDLE_FUNC (handle_filterurls);
 #endif
 #ifdef REMOTE_FILTER_ENABLE
 static HANDLE_FUNC (handle_remotefilter);
+static HANDLE_FUNC (handle_ident);
 #endif
 static HANDLE_FUNC (handle_group);
 static HANDLE_FUNC (handle_listen);
@@ -247,6 +248,7 @@ struct {
 #ifdef REMOTE_FILTER_ENABLE
 	/* remote filter */
 	STDCONF ("remotefilter", STR, handle_remotefilter),
+	STDCONF ("ident", STR, handle_ident),
 #endif
 #ifdef REVERSE_SUPPORT
         /* Reverse proxy arguments */
@@ -1011,6 +1013,11 @@ static HANDLE_FUNC (handle_filtercasesensitive)
 static HANDLE_FUNC (handle_remotefilter)
 {
         return set_string_arg (&conf->remotefilter, line, &match[2]);
+}
+
+static HANDLE_FUNC (handle_ident)
+{
+        return set_string_arg (&conf->ident, line, &match[2]);
 }
 #endif
 

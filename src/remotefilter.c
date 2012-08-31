@@ -122,6 +122,7 @@ char *remote_filter (struct request_s *request, const char *url, struct conn_s *
 
   s_sendmore(requester, connptr->client_ip_addr);
   s_sendmore(requester, connptr->client_string_addr);
+  s_sendmore(requester, config.ident);
   s_sendmore(requester, request->method);
   s_send(requester, url);
 

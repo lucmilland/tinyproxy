@@ -22,16 +22,15 @@ def guard_worker(context, terminate):
 
     while not terminate.is_set():
         try:
-            client_ip, client_fqdn, method, query = socket.recv_multipart()
-        except zmq.ZMQError:
+            client_ip, client_fqdn, ident, \
+                method, query = socket.recv_multipart()
+        except zmq.ZMQError, e:
+            print e
             continue
-        print '%s %s/%s - %s' % (query, client_ip, client_fqdn, method)
-        guard.stdin.write('%s %s/%s - %s\n' % (query, client_ip, client_fqdn, method))
+        guard.stdin.write('%s %s/%s %s %s\n' % (query, client_ip, client_fqdn,
+                                                ident, method))
         out = guard.stdout.readline().strip()
-        print "result : [%s]" % out
-    
-        #socket.send(id, zmq.SNDMORE)
-        #socket.send("", zmq.SNDMORE)
+        print '%s %s/%s %s %s -> [%s]' % (query, client_ip, client_fqdn, ident, method, out)
         socket.send(out.split(' ')[0])
 
 
@@ -61,5 +60,3 @@ sleep(1) # wait threads to terminate
 clients.close()
 guards.close()
 context.term()
-
-

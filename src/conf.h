@@ -56,6 +56,7 @@ struct config_s {
 #endif                          /* FILTER_ENABLE */
 #ifdef REMOTE_FILTER_ENABLE
         char *remotefilter;
+        char *ident; /* box identity */
 #endif                          /* REMOTE_FILTER_ENABLE */
 
 #ifdef XTINYPROXY_ENABLE
