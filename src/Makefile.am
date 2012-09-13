@@ -15,15 +15,18 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+pkgsysconfdir = $(sysconfdir)/$(PACKAGE)
+
 sbin_PROGRAMS = tinyproxy
 
 AM_CPPFLAGS = \
-	-DSYSCONFDIR=\"${sysconfdir}\" \
+	-DSYSCONFDIR=\"${pkgsysconfdir}\" \
 	-DLOCALSTATEDIR=\"${localstatedir}\"
 
 tinyproxy_SOURCES = \
 	acl.c acl.h \
 	anonymous.c anonymous.h \
+	authors.c authors.h \
 	buffer.c buffer.h \
 	child.c child.h \
 	common.h \
@@ -51,3 +54,16 @@ EXTRA_tinyproxy_SOURCES = filter.c filter.h \
 	transparent-proxy.c transparent-proxy.h
 tinyproxy_DEPENDENCIES = @ADDITIONAL_OBJECTS@
 tinyproxy_LDADD = @ADDITIONAL_OBJECTS@
+
+EXTRA_DIST = \
+	authors.xsl
+
+authors.c: $(top_srcdir)/authors.xml $(srcdir)/authors.xsl
+if HAVE_XSLTPROC
+	$(AM_V_GEN) $(XSLTPROC) $(srcdir)/authors.xsl $< > $(@) || rm -f $(@)
+else
+        @echo "*** xsltproc is required to regenerate $(@) ***"; exit 1;
+endif
+
+BUILT_SOURCES = \
+	authors.c

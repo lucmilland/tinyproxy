@@ -32,6 +32,7 @@
 #include "main.h"
 
 #include "anonymous.h"
+#include "authors.h"
 #include "buffer.h"
 #include "conf.h"
 #include "daemon.h"
@@ -92,9 +93,13 @@ display_version (void)
 static void
 display_license (void)
 {
+        const char * const *authors;
+        const char * const *documenters;
+
         display_version ();
 
         printf ("\
+\n\
   Copyright 1998       Steven Young (sdyoung@well.com)\n\
   Copyright 1998-2002  Robert James Kaes (rjkaes@users.sourceforge.net)\n\
   Copyright 1999       George Talusan (gstalusan@uwaterloo.ca)\n\
@@ -114,7 +119,21 @@ display_license (void)
 \n\
   You should have received a copy of the GNU General Public License\n\
   along with this program; if not, write to the Free Software\n\
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.\n");
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.\n\
+\n");
+
+        printf ("\nAUTHORS:\n");
+        for (authors = authors_get_authors (); *authors; authors++) {
+                printf ("  %s\n", *authors);
+        }
+
+        printf ("\nDOCUMENTERS:\n");
+        for (documenters = authors_get_documenters ();
+             *documenters; documenters++) {
+                printf ("  %s\n", *documenters);
+        }
+
+        printf ("\n");
 }
 
 /*
@@ -171,7 +190,7 @@ display_usage (void)
                 printf ("    None\n");
 
         printf ("\n"
-                "For bug reporting instructions, please see:\n"
+                "For support and bug reporting instructions, please visit\n"
                 "<https://banu.com/tinyproxy/>.\n");
 }
 

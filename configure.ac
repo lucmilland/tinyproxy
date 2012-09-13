@@ -4,14 +4,14 @@
 AC_PREREQ(2.54)
 
 m4_define([tinyproxy_major_version], [1])
-m4_define([tinyproxy_minor_version], [8])
-m4_define([tinyproxy_micro_version], [3])
+m4_define([tinyproxy_minor_version], [9])
+m4_define([tinyproxy_micro_version], [0])
 m4_define([tinyproxy_real_version],
           [tinyproxy_major_version.tinyproxy_minor_version.tinyproxy_micro_version])
 m4_define([tinyproxy_version], [tinyproxy_real_version])
 
 # For overriding the version string. Comment out if not needed.
-# m4_define([tinyproxy_version], [1.8.2])
+# m4_define([tinyproxy_version], [1.9.0])
 
 m4_define([tinyproxy_unstable],
           m4_if(m4_eval(tinyproxy_minor_version % 2), [1], [yes], [no]))
@@ -23,7 +23,7 @@ AC_INIT([Tinyproxy], [tinyproxy_version],
 	[tinyproxy])
 
 AC_CANONICAL_TARGET
-AM_INIT_AUTOMAKE([dist-bzip2])
+AM_INIT_AUTOMAKE([foreign dist-bzip2 dist-xz])
 AM_CONFIG_HEADER(config.h)
 AC_CONFIG_MACRO_DIR([m4macros])
 
@@ -207,7 +207,7 @@ AC_CHECK_FUNCS([strlcpy strlcat])
 
 
 dnl Enable extra warnings
-DESIRED_FLAGS="-fdiagnostics-show-option -Wall -Wextra -Wno-unused-parameter -Wmissing-prototypes -Wstrict-prototypes -Wmissing-declarations -Wfloat-equal -Wundef -Wformat=2 -Wlogical-op -Wmissing-include-dirs -Wformat-nonliteral -Wold-style-definition -Wpointer-arith -Waggregate-return -Winit-self -Wpacked --std=c89 -ansi -pedantic -Wc++-compat -Wno-long-long -Wno-overlength-strings -Wdeclaration-after-statement -Wredundant-decls -Wmissing-noreturn -Wshadow -Wendif-labels -Wcast-qual -Wcast-align -Wwrite-strings -Wp,-D_FORTIFY_SOURCE=2 -fno-common"
+DESIRED_FLAGS="-fdiagnostics-show-option -Wall -Wextra -Wno-unused-parameter -Wmissing-prototypes -Wstrict-prototypes -Wmissing-declarations -Wfloat-equal -Wundef -Wformat=2 -Wlogical-op -Wmissing-include-dirs -Wformat-nonliteral -Wold-style-definition -Wpointer-arith -Waggregate-return -Winit-self -Wpacked --std=c89 -ansi -pedantic -Wno-overlength-strings -Wc++-compat -Wno-long-long -Wno-overlength-strings -Wdeclaration-after-statement -Wredundant-decls -Wmissing-noreturn -Wshadow -Wendif-labels -Wcast-qual -Wcast-align -Wwrite-strings -Wp,-D_FORTIFY_SOURCE=2 -fno-common"
 
 if test -n "${MAINTAINER_MODE_FALSE}"; then
    DESIRED_FLAGS="-Werror $DESIRED_FLAGS"
@@ -222,7 +222,7 @@ if test x"$debug_enabled" != x"yes" ; then
     CFLAGS="-DNDEBUG $CFLAGS"
 fi
 
-LDFLAGS="-Wl,-z,defs"
+LDFLAGS="-Wl,-z,defs $LDFLAGS"
 
 dnl
 dnl Make sure we can actually handle the "--with-*" and "--enable-*" stuff.
@@ -281,6 +281,12 @@ AC_SUBST(LDFLAGS)
 AC_SUBST(CPPFLAGS)
 AC_SUBST(LIBS)
 AC_SUBST(ADDITIONAL_OBJECTS)
+
+# Check for xml tools
+AC_PATH_PROG(XMLLINT, xmllint, no)
+AM_CONDITIONAL(HAVE_XMLLINT, test "x$XMLLINT" != "xno")
+AC_PATH_PROG(XSLTPROC, xsltproc, no)
+AM_CONDITIONAL(HAVE_XSLTPROC, test "x$XSLTPROC" != "xno")
 
 # Check for asciidoc
 AC_PATH_PROG(A2X, a2x, no)
