@@ -5,9 +5,7 @@ config.cache
 config.h
 config.log
 config.status
-depcomp
 libtool
-missing
 stamp-h1
 autom4te.cache
 cscope.files

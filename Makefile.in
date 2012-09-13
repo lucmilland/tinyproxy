@@ -259,8 +259,7 @@ SUBDIRS = \
 	data \
 	etc \
 	docs \
-	m4macros \
-	tests
+	m4macros
 
 
 # tools want this on a single line
@@ -810,7 +809,7 @@ AUTHORS: authors.xml authors.xsl
 
 validate-authors:
 @HAVE_XMLLINT_TRUE@	@$(XMLLINT) --noout --path $(srcdir) --valid authors.xml || \
-@HAVE_XMLLINT_TRUE@          ( echo "*** authors.xml IS INVALID ***"; exit 1; )
+@HAVE_XMLLINT_TRUE@	( echo "*** authors.xml IS INVALID ***"; exit 1; )
 
 all-local: AUTHORS
 

@@ -2,9 +2,7 @@ SUBDIRS = \
 	src \
 	data \
 	etc \
-	docs \
-	m4macros \
-	tests
+	m4macros
 
 # tools want this on a single line
 ACLOCAL_AMFLAGS = -I m4macros
