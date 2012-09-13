@@ -50,6 +50,7 @@ tinyproxy_SOURCES = \
 	connect-ports.c connect-ports.h
 
 EXTRA_tinyproxy_SOURCES = filter.c filter.h \
+	remotefilter.c remotefilter.h \
 	reverse-proxy.c reverse-proxy.h \
 	transparent-proxy.c transparent-proxy.h
 tinyproxy_DEPENDENCIES = @ADDITIONAL_OBJECTS@

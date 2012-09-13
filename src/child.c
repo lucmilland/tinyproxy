@@ -20,6 +20,9 @@
  * processing incoming connections.
  */
 
+#include <stdlib.h>
+#include <time.h>
+
 #include "main.h"
 
 #include "child.h"
@@ -31,6 +34,7 @@
 #include "sock.h"
 #include "utils.h"
 #include "conf.h"
+#include "remotefilter.h"
 
 static int listenfd;
 static socklen_t addrlen;
@@ -196,6 +200,11 @@ static void child_main (struct child_s *ptr)
         }
 
         ptr->connects = 0;
+	srand(time(NULL));
+
+#ifdef REMOTE_FILTER_ENABLE
+	remote_filter_init ();
+#endif /* REMOTE_FILTER_ENABLE */
 
         while (!config.quit) {
                 ptr->status = T_WAITING;
@@ -270,6 +279,10 @@ static void child_main (struct child_s *ptr)
         }
 
         ptr->status = T_EMPTY;
+
+#ifdef REMOTE_FILTER_ENABLE
+	remote_filter_destroy ();
+#endif /* REMOTE_FILTER_ENABLE */
 
         safefree (cliaddr);
         exit (0);

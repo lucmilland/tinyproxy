@@ -1,6 +1,5 @@
 /* tinyproxy - A fast light-weight HTTP proxy
- * Copyright (C) 1998 Steven Young <sdyoung@miranda.org>
- * Copyright (C) 1999 Robert James Kaes <rjkaes@users.sourceforge.net>
+ * Copyright (C) 1999 George Talusan <gstalusan@uwaterloo.ca>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,21 +16,23 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-/* See 'main.c' for detailed information. */
+/* See 'filter.c' for detailed information. */
 
-#ifndef __MAIN_H__
-#define __MAIN_H__
+#ifndef _TINYPROXY_REMOTEFILTER_H_
+#define _TINYPROXY_REMOTEFILTER_H_
 
-#include "common.h"
+#include "reqs.h"
+#include "conns.h"
 
-/* Global variables for the main controls of the program */
-#define MAXBUFFSIZE     ((size_t)(1024 * 24))   /* Max size of buffer */
-#define MAX_IDLE_TIME   (60 * 10)       /* 10 minutes of no activity */
+typedef enum {
+        REMOTE_FILTER_DEFAULT_ALLOW,
+        REMOTE_FILTER_DEFAULT_DENY
+} remote_filter_policy_t;
 
-/* Global Structures used in the program */
-extern struct config_s config;
-extern unsigned int received_sighup;    /* boolean */
+extern void remote_filter_init (void);
+extern void remote_filter_destroy (void);
+extern char *remote_filter (struct request_s *request, const char *url, struct conn_s *connptr);
 
-extern int reload_config (void);
+extern void remote_filter_set_default_policy (remote_filter_policy_t policy);
 
-#endif /* __MAIN_H__ */
+#endif

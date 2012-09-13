@@ -52,7 +52,13 @@ struct config_s {
         unsigned int filter_url;        /* boolean */
         unsigned int filter_extended;   /* boolean */
         unsigned int filter_casesensitive;      /* boolean */
+        unsigned int filter_defaultdeny;      /* boolean */
 #endif                          /* FILTER_ENABLE */
+#ifdef REMOTE_FILTER_ENABLE
+        char *remotefilter;
+        char *ident; /* box identity */
+#endif                          /* REMOTE_FILTER_ENABLE */
+
 #ifdef XTINYPROXY_ENABLE
         unsigned int add_xtinyproxy; /* boolean */
 #endif

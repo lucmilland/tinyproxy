@@ -131,6 +131,10 @@ static HANDLE_FUNC (handle_filterdefaultdeny);
 static HANDLE_FUNC (handle_filterextended);
 static HANDLE_FUNC (handle_filterurls);
 #endif
+#ifdef REMOTE_FILTER_ENABLE
+static HANDLE_FUNC (handle_remotefilter);
+static HANDLE_FUNC (handle_ident);
+#endif
 static HANDLE_FUNC (handle_group);
 static HANDLE_FUNC (handle_listen);
 static HANDLE_FUNC (handle_logfile);
@@ -240,6 +244,11 @@ struct {
         STDCONF ("filterextended", BOOL, handle_filterextended),
         STDCONF ("filterdefaultdeny", BOOL, handle_filterdefaultdeny),
         STDCONF ("filtercasesensitive", BOOL, handle_filtercasesensitive),
+#endif
+#ifdef REMOTE_FILTER_ENABLE
+	/* remote filter */
+	STDCONF ("remotefilter", STR, handle_remotefilter),
+	STDCONF ("ident", STR, handle_ident),
 #endif
 #ifdef REVERSE_SUPPORT
         /* Reverse proxy arguments */
@@ -987,14 +996,28 @@ static HANDLE_FUNC (handle_filterdefaultdeny)
 {
         assert (match[2].rm_so != -1);
 
-        if (get_bool_arg (line, &match[2]))
+	set_bool_arg (&conf->filter_defaultdeny, line, &match[2]);
+
+        if (get_bool_arg (line, &match[2])) {
                 filter_set_default_policy (FILTER_DEFAULT_DENY);
+	}
         return 0;
 }
 
 static HANDLE_FUNC (handle_filtercasesensitive)
 {
         return set_bool_arg (&conf->filter_casesensitive, line, &match[2]);
+}
+#endif
+#ifdef REMOTE_FILTER_ENABLE
+static HANDLE_FUNC (handle_remotefilter)
+{
+        return set_string_arg (&conf->remotefilter, line, &match[2]);
+}
+
+static HANDLE_FUNC (handle_ident)
+{
+        return set_string_arg (&conf->ident, line, &match[2]);
 }
 #endif
 

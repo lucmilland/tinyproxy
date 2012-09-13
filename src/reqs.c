@@ -32,6 +32,7 @@
 #include "buffer.h"
 #include "conns.h"
 #include "filter.h"
+#include "remotefilter.h"
 #include "hashmap.h"
 #include "heap.h"
 #include "html-error.h"
@@ -318,13 +319,15 @@ static int send_ssl_response (struct conn_s *connptr)
  * build a new request line. Finally connect to the remote server.
  */
 static struct request_s *process_request (struct conn_s *connptr,
-                                          hashmap_t hashofheaders)
+                                          hashmap_t hashofheaders, int dofilter)
 {
         char *url;
         struct request_s *request;
         int ret;
         size_t request_len;
-
+#ifdef REMOTE_FILTER_ENABLE
+	char *filtered;
+#endif
         /* NULL out all the fields so frees don't cause segfaults. */
         request =
             (struct request_s *) safecalloc (1, sizeof (struct request_s));
@@ -461,32 +464,65 @@ BAD_REQUEST_ERROR:
         /*
          * Filter restricted domains/urls
          */
-        if (config.filter) {
+        if (config.filter && dofilter) {
                 if (config.filter_url)
                         ret = filter_url (url);
                 else
                         ret = filter_domain (request->host);
-
                 if (ret) {
-                        update_stats (STAT_DENIED);
 
-                        if (config.filter_url)
-                                log_message (LOG_NOTICE,
-                                             "Proxying refused on filtered url \"%s\"",
-                                             url);
-                        else
-                                log_message (LOG_NOTICE,
-                                             "Proxying refused on filtered domain \"%s\"",
-                                             request->host);
+		  if (!config.filter_defaultdeny) {
+		    /*
+		     * Blacklist check failed
+		     */
+		    update_stats (STAT_DENIED);
 
-                        indicate_http_error (connptr, 403, "Filtered",
-                                             "detail",
-                                             "The request you made has been filtered",
-                                             "url", url, NULL);
-                        goto fail;
+		    if (config.filter_url)
+		      log_message (LOG_NOTICE,
+				   "Proxying refused on filtered url \"%s\"",
+				   url);
+		    else
+		      log_message (LOG_NOTICE,
+				   "Proxying refused on filtered domain \"%s\"",
+				   request->host);
+
+		    indicate_http_error (connptr, 403, "Filtered",
+					 "detail",
+					 "The request you made has been filtered",
+					 "url", url, NULL);
+		    goto fail;
+
+		  }
+
+#ifdef REMOTE_FILTER_ENABLE
+		  else {
+		    /*
+		     * Whitelist check failed : try with remote-filter
+		     */
+		    filtered = remote_filter(request, url, connptr);
+		    log_message (LOG_INFO, "Filtering 1: \"%s\"", filtered);
+		    if (filtered) {
+		      /* redirect to 'filtered' */
+		      
+		      safefree(url);
+		      free_request_struct (request);
+		      safefree(connptr->request_line);
+		      connptr->request_line = (char *)safemalloc(strlen(filtered) + 14);
+		      sprintf(connptr->request_line, "GET %s HTTP/1.0", filtered);
+		      free(filtered);
+
+		      log_message (LOG_INFO, "Filtering 2 :\"%s\"", connptr->request_line);
+		      /* recurse once with rewritten url */
+		      return process_request(connptr, hashofheaders, 0);
+		    }
+		  }
+#endif /* REMOTE_FILTER_ENABLE */
+
                 }
         }
-#endif
+
+#endif /* FILTER_ENABLE */
+
 
 
         /*
@@ -610,6 +646,11 @@ add_header_to_connection (hashmap_t hashofheaders, char *header, size_t len)
         return hashmap_insert (hashofheaders, header, sep, len);
 }
 
+/* define max number of headers. big enough to handle legitimate cases,
+ * but limited to avoid DoS 
+ */
+#define MAX_HEADERS 10000
+
 /*
  * Read all the headers from the stream
  */
@@ -617,6 +658,7 @@ static int get_all_headers (int fd, hashmap_t hashofheaders)
 {
         char *line = NULL;
         char *header = NULL;
+	int count;
         char *tmp;
         ssize_t linelen;
         ssize_t len = 0;
@@ -625,7 +667,7 @@ static int get_all_headers (int fd, hashmap_t hashofheaders)
         assert (fd >= 0);
         assert (hashofheaders != NULL);
 
-        for (;;) {
+        for (count = 0; count < MAX_HEADERS; count++) {
                 if ((linelen = readline (fd, &line)) <= 0) {
                         safefree (header);
                         safefree (line);
@@ -691,6 +733,12 @@ static int get_all_headers (int fd, hashmap_t hashofheaders)
 
                 safefree (line);
         }
+
+	/* if we get there, this is we reached MAX_HEADERS count.
+	   bail out with error */
+	safefree (header);
+	safefree (line);
+	return -1;
 }
 
 /*
@@ -1455,7 +1503,7 @@ void handle_connection (int fd)
                                 header->value, strlen (header->value) + 1);
         }
 
-        request = process_request (connptr, hashofheaders);
+        request = process_request (connptr, hashofheaders, 1);
         if (!request) {
                 if (!connptr->show_stats) {
                         update_stats (STAT_BADCONN);
