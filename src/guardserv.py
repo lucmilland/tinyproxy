@@ -38,7 +38,7 @@ context = zmq.Context(1)
 
 # socket to talk to clients
 clients = context.socket(zmq.ROUTER)
-clients.bind("tcp://*:5555")
+clients.bind("tcp://*:1066")
 
 # socket to talk to workers
 guards = context.socket(zmq.DEALER)
