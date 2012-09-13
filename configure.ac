@@ -301,27 +301,13 @@ AM_CONDITIONAL(HAVE_XMLLINT, test "x$XMLLINT" != "xno")
 AC_PATH_PROG(XSLTPROC, xsltproc, no)
 AM_CONDITIONAL(HAVE_XSLTPROC, test "x$XSLTPROC" != "xno")
 
-# Check for asciidoc
-AC_PATH_PROG(A2X, a2x, no)
-AM_CONDITIONAL(HAVE_A2X, test "x$A2X" != "xno")
-if test x"$A2X" = x"no"; then
-  AC_MSG_ERROR([Test for asciidoc failed. See the file 'INSTALL' for help.])
-fi
-
 AC_CONFIG_FILES([
 Makefile
 src/Makefile
 data/Makefile
 data/templates/Makefile
 etc/Makefile
-docs/Makefile
-docs/man5/Makefile
-docs/man5/tinyproxy.conf.txt
-docs/man8/Makefile
-docs/man8/tinyproxy.txt
 m4macros/Makefile
-tests/Makefile
-tests/scripts/Makefile
 ])
 
 AC_OUTPUT
