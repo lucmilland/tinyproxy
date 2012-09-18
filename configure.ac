@@ -142,6 +142,7 @@ if test x"$remotefilter_enabled" = x"yes"; then
     ADDITIONAL_OBJECTS="$ADDITIONAL_OBJECTS remotefilter.o"
     AC_DEFINE(REMOTE_FILTER_ENABLE)
     AC_CHECK_LIB(zmq, zmq_init)
+    AC_CHECK_LIB(pthread, pthread_create)
 fi
 
 dnl Check for broken regex library

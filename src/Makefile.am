@@ -17,7 +17,7 @@
 
 pkgsysconfdir = $(sysconfdir)/$(PACKAGE)
 
-sbin_PROGRAMS = tinyproxy
+sbin_PROGRAMS = tinyproxy proxymux
 
 AM_CPPFLAGS = \
 	-DSYSCONFDIR=\"${pkgsysconfdir}\" \
@@ -55,6 +55,11 @@ EXTRA_tinyproxy_SOURCES = filter.c filter.h \
 	transparent-proxy.c transparent-proxy.h
 tinyproxy_DEPENDENCIES = @ADDITIONAL_OBJECTS@
 tinyproxy_LDADD = @ADDITIONAL_OBJECTS@
+
+proxymux_SOURCES = \
+	mux.c
+proxymux_LDADD = -lpthread -lzmq
+proxymux_CFLAGS = -D_POSIX_SOURCE -D_GNU_SOURCE
 
 EXTRA_DIST = \
 	authors.xsl

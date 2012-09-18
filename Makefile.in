@@ -144,7 +144,6 @@ distuninstallcheck_listfiles = find . -type f -print
 am__distuninstallcheck_listfiles = $(distuninstallcheck_listfiles) \
   | sed 's|^\./|$(prefix)/|' | grep -v '$(infodir)/dir$$'
 distcleancheck_listfiles = find . -type f -print
-A2X = @A2X@
 ACLOCAL = @ACLOCAL@
 ADDITIONAL_OBJECTS = @ADDITIONAL_OBJECTS@
 AMTAR = @AMTAR@
@@ -258,7 +257,6 @@ SUBDIRS = \
 	src \
 	data \
 	etc \
-	docs \
 	m4macros
 
 
@@ -809,7 +807,7 @@ AUTHORS: authors.xml authors.xsl
 
 validate-authors:
 @HAVE_XMLLINT_TRUE@	@$(XMLLINT) --noout --path $(srcdir) --valid authors.xml || \
-@HAVE_XMLLINT_TRUE@	( echo "*** authors.xml IS INVALID ***"; exit 1; )
+@HAVE_XMLLINT_TRUE@          ( echo "*** authors.xml IS INVALID ***"; exit 1; )
 
 all-local: AUTHORS
 

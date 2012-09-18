@@ -91,9 +91,17 @@ static int s_sendmore (void *sock, const char *string) {
  */
 void remote_filter_init (void)
 {
+  char id[19];
+
   if (!already_init && config.remotefilter) {
     context = zmq_init (1);
     requester = zmq_socket (context, ZMQ_REQ);
+
+    /*
+    sprintf (id, "%0p", (void*)requester);
+    zmq_setsockopt (requester, ZMQ_IDENTITY, id, strlen (id));
+    */
+
     zmq_connect (requester, config.remotefilter);
     already_init = 1;
   }
@@ -114,11 +122,11 @@ char *remote_filter (struct request_s *request, const char *url, struct conn_s *
 {
   char* reply;
 
+  log_message (LOG_INFO, "filtering: %s %s %s %d/%s\n", request->host, request->method,
+	       request->protocol, request->port, request->path);
+
   if (!already_init)
     return (char *)NULL;
-
-  /* printf ("filtering: %s %s %s %d/%s\n", request->host, request->method,
-     request->protocol, request->port, request->path); */
 
   s_sendmore(requester, connptr->client_ip_addr);
   s_sendmore(requester, connptr->client_string_addr);
@@ -128,8 +136,10 @@ char *remote_filter (struct request_s *request, const char *url, struct conn_s *
 
   reply = s_recv(requester);
 
+  log_message (LOG_ERR, "Got: %s\n", reply);
+
   if (reply == NULL) {
-    printf ("Error: %d\n", errno);
+    log_message (LOG_ERR, "Error: %d\n", errno);
   } else {
     if (strlen(reply) != 0) {
       /* squidGuard said "filter this" */
@@ -140,7 +150,6 @@ char *remote_filter (struct request_s *request, const char *url, struct conn_s *
     }
   }
   return (char *)NULL;
-
 }
 
 /*
