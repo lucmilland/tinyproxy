@@ -500,7 +500,7 @@ BAD_REQUEST_ERROR:
 		     * Whitelist check failed : try with remote-filter
 		     */
 		    filtered = remote_filter(request, url, connptr);
-		    log_message (LOG_INFO, "Filtering 1: \"%s\"", filtered);
+		    log_message (LOG_DEBUG, "Filtering 1: \"%s\"", filtered);
 		    if (filtered) {
 		      /* redirect to 'filtered' */
 		      
@@ -511,7 +511,7 @@ BAD_REQUEST_ERROR:
 		      sprintf(connptr->request_line, "GET %s HTTP/1.0", filtered);
 		      free(filtered);
 
-		      log_message (LOG_INFO, "Filtering 2 :\"%s\"", connptr->request_line);
+		      log_message (LOG_DEBUG, "Filtering 2 :\"%s\"", connptr->request_line);
 		      /* recurse once with rewritten url */
 		      return process_request(connptr, hashofheaders, 0);
 		    }

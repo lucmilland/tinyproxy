@@ -325,5 +325,5 @@ ConnectPort 563
 # If not set then no rewriting occurs.
 #
 #ReverseBaseURL "http://localhost:8888/"
-RemoteFilter "ipc:///var/run/http-filter"
+RemoteFilter "ipc:///tmp/http-filter"
 Ident "notinstalled"

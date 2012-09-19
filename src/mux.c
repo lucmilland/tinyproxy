@@ -141,7 +141,7 @@ mux_init() {
   /* init zmq */
   ctx->zmq_context = zmq_init(1);
   ctx->clients = zmq_socket(ctx->zmq_context, ZMQ_ROUTER);
-  zmq_bind (ctx->clients, "ipc:///var/run/http-filter");
+  zmq_bind (ctx->clients, "ipc:///tmp/http-filter");
 
   return ctx;
 }
@@ -243,12 +243,12 @@ worker_task(void *args) {
 
     if (response == NULL) {
       perror("Error on request");
+    } else {
+      /* re-send caller's ID */
+      zmq_send(mux->clients, &id_message, ZMQ_SNDMORE);
+      s_sendmore(mux->clients, "");
+      s_send(mux->clients, response);
     }
-    /* re-send caller's ID */
-    zmq_send(mux->clients, &id_message, ZMQ_SNDMORE);
-    s_sendmore(mux->clients, "");
-
-    s_send(mux->clients, response);
 
     zmq_msg_close (&id_message);
     if (response)
