@@ -57,10 +57,11 @@ EXTRA_tinyproxy_SOURCES = filter.c filter.h \
 
 tinyproxy_DEPENDENCIES = @ADDITIONAL_OBJECTS@
 tinyproxy_LDADD = @ADDITIONAL_OBJECTS@
+tinyproxy_CPPFLAGS = -D_GNU_SOURCE -D_POSIX_C_SOURCE=200809L $(AM_CPPFLAGS)
 
 noinst_LIBRARIES = libmux.a
 libmux_a_SOURCES = mux.c mux.h
-libmux_a_CPPFLAGS = -D_GNU_SOURCE -D_POSIX_SOURCE $(AM_CPPFLAGS)
+libmux_a_CPPFLAGS = -D_GNU_SOURCE $(AM_CPPFLAGS)
 
 
 EXTRA_DIST = \

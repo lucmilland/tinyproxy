@@ -21,6 +21,8 @@
 #ifndef TINYPROXY_HEAP_H
 #define TINYPROXY_HEAP_H
 
+#include <string.h>
+
 /*
  * The following is to allow for better memory checking.
  */
