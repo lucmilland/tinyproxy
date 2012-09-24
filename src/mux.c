@@ -8,19 +8,28 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <arpa/inet.h>
 #include <zmq.h>
+
+#include "main.h"
+#include "conf.h"
 
 #define WORKERS 1
 
+struct config_s config;
+struct config_s config_defaults;
+
 struct mux_context {
-  int server;
-  void *clients;
-  void *zmq_context;  
+  int server;        /* UDP socket to guardserv */
+  void *zmq_context; /* ZMQ context for the following :*/
+  void *clients;     /* ZMQ socket to tinyproxys (they are clients) */
 };
 typedef struct mux_context *mux_context_t;
 
 /* prototypes */
 mux_context_t mux_init(void);
+void mux_destroy(mux_context_t ctx);
+mux_context_t mux_reset(mux_context_t ctx);
 
 /***************
  * zmq helpers
@@ -102,7 +111,7 @@ get_server_connection(const char *hostname) {
  * Return NULL on error
  */
 mux_context_t
-mux_init() {
+mux_init(void) {
   mux_context_t ctx;
   struct addrinfo *rp, *serv_addr;
 
@@ -114,7 +123,7 @@ mux_init() {
 
   /* init upstream socket */
 
-  serv_addr = get_server_connection("localhost");
+  serv_addr = get_server_connection(config.remotefilter);
   if (!serv_addr) {
     /* error */
     return NULL;
@@ -138,8 +147,10 @@ mux_init() {
   }
   freeaddrinfo(serv_addr);
 
-  /* init zmq */
+  /* init zmq sockets */
   ctx->zmq_context = zmq_init(1);
+
+  /* listen requests from tinyproxy */
   ctx->clients = zmq_socket(ctx->zmq_context, ZMQ_ROUTER);
   zmq_bind (ctx->clients, "ipc:///tmp/http-filter");
 
@@ -168,47 +179,68 @@ mux_reset(mux_context_t ctx) {
 }
 
 /*
- * Queue request
+ * response listener thread
  */
-static char *
-queue_request(mux_context_t mux, char *request) {
+static void *
+listener_thread(void *args) {
   int ret;
-  char buffer[1024];
+  char id[1024];
+  char *buffer;
+  mux_context_t mux;  
+  zmq_msg_t id_message;
 
-  if (send(mux->server, request, strlen(request), 0) < 0) {
-    perror("error occured sending message");
-  }
-  free(request);
+  mux = (mux_context_t)args;
 
-  /* wait for response */
-  ret = recv(mux->server, buffer, sizeof(buffer), 0);
-  if (ret < 0) {
-    perror("error while reading response");
-    return NULL;
-  } else if (ret == 0) {
-    perror("peer has closed connection");
-    return NULL;
+  while (1) {
+    /* wait for a response */
+    ret = recv(mux->server, &id, sizeof(id), 0);
+    /* fprintf(stderr, "answer : %d bytes : %s\n", ret, id); */
+
+    if (ret < 0) {
+      perror("error while reading response");
+      break;
+    } else if (ret == 0) {
+      perror("peer has closed connection");
+      break;
+    } else if (ret < 3) {
+      perror("response is too short");
+      break;
+    }
+
+    buffer = (char*)&id;
+    do {
+      buffer++;
+    } while (*buffer != ' ' && *buffer);
+    if (*buffer == ' ') *buffer++ = '\0';
+
+    /* redistribute response to owner */
+
+    /* re-send caller's ID ... */
+    zmq_msg_init_data (&id_message, (void*)&id, strlen(id), NULL, NULL);
+    zmq_send(mux->clients, &id_message, ZMQ_SNDMORE);
+    s_sendmore(mux->clients, "");
+    /* ... then response */
+    s_send(mux->clients, buffer);
+
   }
-  return strdup(buffer);
+  return NULL;
+
 }
 
 /*
  * Worker thread
  */
-static void *
+static void
 worker_task(void *args) {
   mux_context_t mux;
   char *ip_address, *string_address, *ident, *method, *url, *empty;
   zmq_msg_t id_message;
-  char *request, *response;
+  char *request;
 
-  mux = mux_init();
-  if (!mux) {
-    perror("Can't init");
-    return NULL;
-  }
+  mux = (mux_context_t)args;
 
   while (1) {
+
     /* get caller's ID */
     zmq_msg_init (&id_message);
     if (zmq_recv (mux->clients, &id_message, 0)) {
@@ -225,34 +257,26 @@ worker_task(void *args) {
     method = s_recv(mux->clients);
     url = s_recv(mux->clients);
 
-    if (asprintf(&request, "%s %s/%s %s %s", 
+    if (asprintf(&request, "%s %s %s/%s %s %s", (char*)zmq_msg_data(&id_message),
 		 url, ip_address, string_address, ident, method) < 0) {
       perror("failed to allocate string");
       break;
     }
-
+    /* fprintf(stderr, "request : %s\n", request); */
     free(empty);
     free(ip_address);
     free(string_address);
     free(ident);
     free(method);
     free(url);
+    zmq_msg_close (&id_message);
 
     /* queue request */
-    response = queue_request(mux, request);
-
-    if (response == NULL) {
-      perror("Error on request");
-    } else {
-      /* re-send caller's ID */
-      zmq_send(mux->clients, &id_message, ZMQ_SNDMORE);
-      s_sendmore(mux->clients, "");
-      s_send(mux->clients, response);
+    if (send(mux->server, request, strlen(request), 0) < 0) {
+      perror("error occured sending message");
+      break;
     }
-
-    zmq_msg_close (&id_message);
-    if (response)
-      free(response);
+    free(request);
   }
 }
 
@@ -260,13 +284,18 @@ worker_task(void *args) {
  * Main
  */
 int
-main() {
-  pthread_t worker[WORKERS];
+main(void) {
+  pthread_t listener;
+  mux_context_t mux;
 
-  /*for (i = 0; i < WORKERS; i++) {
-  #  pthread_create (&(worker[i]), NULL, worker_task, NULL);
-  }*/
-  worker_task(NULL);
+  mux = mux_init();
+  if (!mux) {
+    perror("Can't init");
+    return -1;
+  }
+
+  pthread_create (&listener, NULL, listener_thread, (void*)mux);
+  worker_task((void*)mux);
   /*getchar();*/
   return 0;
 }

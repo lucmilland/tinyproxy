@@ -23,6 +23,9 @@
  */
 
 #include <zmq.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
 #include "main.h"
 
 #include "remotefilter.h"
@@ -91,10 +94,14 @@ static int s_sendmore (void *sock, const char *string) {
  */
 void remote_filter_init (void)
 {
-  if (!already_init && config.remotefilter) {
+  char id[8];
+
+  snprintf(id, 8, "%x", getpid());
+  if (!already_init) {
     context = zmq_init (1);
     requester = zmq_socket (context, ZMQ_REQ);
-    zmq_connect (requester, config.remotefilter);
+    zmq_setsockopt(requester, ZMQ_IDENTITY, id, strlen(id));
+    zmq_connect (requester, "ipc:///tmp/http-filter");
     already_init = 1;
   }
 }
