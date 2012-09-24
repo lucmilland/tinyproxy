@@ -375,7 +375,9 @@ done:
 int
 main (int argc, char **argv)
 {
-  void * mux;
+#ifdef REMOTE_FILTER_ENABLE
+  void * mux = NULL;
+#endif /* REMOTE_FILTER_ENABLE */
 
         /* Only allow u+rw bits. This may be required for some versions
          * of glibc so that mkstemp() doesn't make us vulnerable.
@@ -451,6 +453,7 @@ main (int argc, char **argv)
         }
 
 #ifdef REMOTE_FILTER_ENABLE
+	/* spawn remotefilter multiplexor */
         if (config.remotefilter) {
 	  mux = remote_filter_mux_init(config.remotefilter);
 	  if (mux == NULL) {
@@ -511,7 +514,7 @@ main (int argc, char **argv)
         if (config.filter) {
 	  filter_destroy ();
 #ifdef REMOTE_FILTER_ENABLE
-	  remote_filter_mux_kill(mux);
+	  if (mux) remote_filter_mux_kill(mux);
 #endif /* REMOTE_FILTER_ENABLE */
 	}
 #endif /* FILTER_ENABLE */

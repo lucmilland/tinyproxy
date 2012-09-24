@@ -11,6 +11,7 @@
 #include <arpa/inet.h>
 #include <zmq.h>
 
+#include "log.h"
 #include "main.h"
 #include "conf.h"
 #include "mux.h"
@@ -93,7 +94,7 @@ get_server_connection(const char *hostname) {
 
   s = getaddrinfo(hostname, "http-filter", &hints, &result);
   if (s != 0) {
-    perror( gai_strerror(s) );
+    log_message(LOG_ERR, gai_strerror(s));
     return NULL;
   }
 
@@ -111,7 +112,7 @@ mux_init(char *hostname) {
 
   ctx = (mux_context_t)malloc(sizeof(struct mux_context));
   if (!ctx) {
-    perror("Can't allocate context");
+    log_message(LOG_ERR, "Can't allocate context");
     return NULL;
   }
 
@@ -136,7 +137,7 @@ mux_init(char *hostname) {
     close(ctx->server);
   }
   if (rp == NULL) {
-    perror("Can't create socket");
+    log_message(LOG_ERR, "Can't create socket");
     return NULL;
   }
   freeaddrinfo(serv_addr);
@@ -182,13 +183,13 @@ listener_thread(void *args) {
     /* fprintf(stderr, "answer : %d bytes : %s\n", ret, id); */
 
     if (ret < 0) {
-      perror("error while reading response");
+      log_message(LOG_ERR, "error while reading response");
       break;
     } else if (ret == 0) {
-      perror("peer has closed connection");
+      log_message(LOG_ERR, "peer has closed connection");
       break;
     } else if (ret < 3) {
-      perror("response is too short");
+      log_message(LOG_ERR, "response is too short");
       break;
     }
 
@@ -209,7 +210,6 @@ listener_thread(void *args) {
 
   }
   return NULL;
-
 }
 
 /*
@@ -229,7 +229,7 @@ worker_task(void *args) {
     /* get caller's ID */
     zmq_msg_init (&id_message);
     if (zmq_recv (mux->clients, &id_message, 0)) {
-      perror("Can't get caller's ID");
+      log_message(LOG_ERR, "Can't get caller's ID");
       break;
     }
 
@@ -244,7 +244,7 @@ worker_task(void *args) {
 
     if (asprintf(&request, "%s %s %s/%s %s %s", (char*)zmq_msg_data(&id_message),
 		 url, ip_address, string_address, ident, method) < 0) {
-      perror("failed to allocate string");
+      log_message(LOG_ERR, "failed to allocate string");
       break;
     }
     /* fprintf(stderr, "request : %s\n", request); */
@@ -258,7 +258,7 @@ worker_task(void *args) {
 
     /* queue request */
     if (send(mux->server, request, strlen(request), 0) < 0) {
-      perror("error occured sending message");
+      log_message(LOG_ERR, "error occured sending message");
       break;
     }
     free(request);
@@ -273,7 +273,7 @@ remote_filter_mux_init(char *hostname) {
 
   mux = mux_init(hostname);
   if (!mux) {
-    perror("Can't init");
+    log_message(LOG_ERR, "Can't init");
     return NULL;
   }
   pthread_create (&listener, NULL, listener_thread, (void*)mux);

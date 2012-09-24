@@ -60,7 +60,7 @@ tinyproxy_LDADD = @ADDITIONAL_OBJECTS@
 
 noinst_LIBRARIES = libmux.a
 libmux_a_SOURCES = mux.c mux.h
-libmux_a_CPPFLAGS = -D_GNU_SOURCE -D_POSIX_SOURCE
+libmux_a_CPPFLAGS = -D_GNU_SOURCE -D_POSIX_SOURCE $(AM_CPPFLAGS)
 
 
 EXTRA_DIST = \
