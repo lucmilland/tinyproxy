@@ -13,11 +13,7 @@
 
 #include "main.h"
 #include "conf.h"
-
-#define WORKERS 1
-
-struct config_s config;
-struct config_s config_defaults;
+#include "mux.h"
 
 struct mux_context {
   int server;        /* UDP socket to guardserv */
@@ -26,10 +22,8 @@ struct mux_context {
 };
 typedef struct mux_context *mux_context_t;
 
-/* prototypes */
-mux_context_t mux_init(void);
-void mux_destroy(mux_context_t ctx);
-mux_context_t mux_reset(mux_context_t ctx);
+static pthread_t listener; /* thread listening response from guardserv */
+static pthread_t worker;   /* thread listening queries from tinyproxy */
 
 /***************
  * zmq helpers
@@ -110,8 +104,8 @@ get_server_connection(const char *hostname) {
  * Init a new context
  * Return NULL on error
  */
-mux_context_t
-mux_init(void) {
+static mux_context_t
+mux_init(char *hostname) {
   mux_context_t ctx;
   struct addrinfo *rp, *serv_addr;
 
@@ -123,7 +117,7 @@ mux_init(void) {
 
   /* init upstream socket */
 
-  serv_addr = get_server_connection(config.remotefilter);
+  serv_addr = get_server_connection(hostname);
   if (!serv_addr) {
     /* error */
     return NULL;
@@ -160,22 +154,13 @@ mux_init(void) {
 /*
  * Destroy
  */
-void
+static void
 mux_destroy(mux_context_t ctx) {
   if (ctx->clients)
     zmq_close(ctx->clients);
   if (ctx->zmq_context)
     zmq_term(ctx->zmq_context);
   free(ctx);
-}
-
-/*
- * Reset context and connections
- */
-mux_context_t
-mux_reset(mux_context_t ctx) {
-  mux_destroy(ctx);
-  return mux_init();
 }
 
 /*
@@ -230,7 +215,7 @@ listener_thread(void *args) {
 /*
  * Worker thread
  */
-static void
+static void *
 worker_task(void *args) {
   mux_context_t mux;
   char *ip_address, *string_address, *ident, *method, *url, *empty;
@@ -278,24 +263,28 @@ worker_task(void *args) {
     }
     free(request);
   }
+
+  pthread_exit(0);
 }
 
-/*
- * Main
- */
-int
-main(void) {
-  pthread_t listener;
+void *
+remote_filter_mux_init(char *hostname) {
   mux_context_t mux;
 
-  mux = mux_init();
+  mux = mux_init(hostname);
   if (!mux) {
     perror("Can't init");
-    return -1;
+    return NULL;
   }
-
   pthread_create (&listener, NULL, listener_thread, (void*)mux);
-  worker_task((void*)mux);
-  /*getchar();*/
-  return 0;
+  pthread_create (&worker , NULL, worker_task, (void*)mux);
+  return mux;
 }
+
+void
+remote_filter_mux_kill(void *mux) {
+  pthread_cancel(listener);
+  pthread_cancel(worker);
+  mux_destroy((mux_context_t)mux);
+}
+

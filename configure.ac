@@ -139,7 +139,7 @@ TP_ARG_ENABLE(remotefilter,
               no)
 
 if test x"$remotefilter_enabled" = x"yes"; then
-    ADDITIONAL_OBJECTS="$ADDITIONAL_OBJECTS remotefilter.o"
+    ADDITIONAL_OBJECTS="$ADDITIONAL_OBJECTS remotefilter.o libmux.a"
     AC_DEFINE(REMOTE_FILTER_ENABLE)
     AC_CHECK_LIB(zmq, zmq_init)
     AC_CHECK_LIB(pthread, pthread_create)
@@ -149,6 +149,8 @@ dnl Check for broken regex library
 TP_ARG_ENABLE(regexcheck,
               [Check for working regex library (default is YES)],
               yes)
+
+AC_PROG_RANLIB
 
 # This is required to build test programs below
 AC_PROG_CC

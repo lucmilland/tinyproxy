@@ -44,6 +44,7 @@
 #include "sock.h"
 #include "stats.h"
 #include "utils.h"
+#include "mux.h"
 
 /*
  * Global Structures
@@ -374,6 +375,8 @@ done:
 int
 main (int argc, char **argv)
 {
+  void * mux;
+
         /* Only allow u+rw bits. This may be required for some versions
          * of glibc so that mkstemp() doesn't make us vulnerable.
          */
@@ -447,6 +450,18 @@ main (int argc, char **argv)
                 }
         }
 
+#ifdef REMOTE_FILTER_ENABLE
+        if (config.remotefilter) {
+	  mux = remote_filter_mux_init(config.remotefilter);
+	  if (mux == NULL) {
+                fprintf (stderr,
+                         "%s: Could not create multiplexor.\n",
+                         argv[0]);
+                exit (EX_SOFTWARE);	    
+	  }
+	}
+#endif /* REMOTE_FILTER_ENABLE */
+
         if (child_pool_create () < 0) {
                 fprintf (stderr,
                          "%s: Could not create the pool of children.\n",
@@ -493,8 +508,12 @@ main (int argc, char **argv)
         }
 
 #ifdef FILTER_ENABLE
-        if (config.filter)
-                filter_destroy ();
+        if (config.filter) {
+	  filter_destroy ();
+#ifdef REMOTE_FILTER_ENABLE
+	  remote_filter_mux_kill(mux);
+#endif /* REMOTE_FILTER_ENABLE */
+	}
 #endif /* FILTER_ENABLE */
 
         shutdown_logging ();

@@ -32,6 +32,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
@@ -52,7 +53,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-sbin_PROGRAMS = tinyproxy$(EXEEXT) proxymux$(EXEEXT)
+sbin_PROGRAMS = tinyproxy$(EXEEXT)
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -65,13 +66,21 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
+LIBRARIES = $(noinst_LIBRARIES)
+AR = ar
+ARFLAGS = cru
+AM_V_AR = $(am__v_AR_@AM_V@)
+am__v_AR_ = $(am__v_AR_@AM_DEFAULT_V@)
+am__v_AR_0 = @echo "  AR    " $@;
+AM_V_at = $(am__v_at_@AM_V@)
+am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
+am__v_at_0 = @
+libmux_a_AR = $(AR) $(ARFLAGS)
+libmux_a_LIBADD =
+am_libmux_a_OBJECTS = libmux_a-mux.$(OBJEXT)
+libmux_a_OBJECTS = $(am_libmux_a_OBJECTS)
 am__installdirs = "$(DESTDIR)$(sbindir)"
 PROGRAMS = $(sbin_PROGRAMS)
-am_proxymux_OBJECTS = proxymux-mux.$(OBJEXT)
-proxymux_OBJECTS = $(am_proxymux_OBJECTS)
-proxymux_DEPENDENCIES =
-proxymux_LINK = $(CCLD) $(proxymux_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
 am_tinyproxy_OBJECTS = acl.$(OBJEXT) anonymous.$(OBJEXT) \
 	authors.$(OBJEXT) buffer.$(OBJEXT) child.$(OBJEXT) \
 	conf.$(OBJEXT) conns.$(OBJEXT) daemon.$(OBJEXT) \
@@ -93,9 +102,6 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 AM_V_CC = $(am__v_CC_@AM_V@)
 am__v_CC_ = $(am__v_CC_@AM_DEFAULT_V@)
 am__v_CC_0 = @echo "  CC    " $@;
-AM_V_at = $(am__v_at_@AM_V@)
-am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
-am__v_at_0 = @
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_CCLD = $(am__v_CCLD_@AM_V@)
@@ -104,9 +110,9 @@ am__v_CCLD_0 = @echo "  CCLD  " $@;
 AM_V_GEN = $(am__v_GEN_@AM_V@)
 am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
 am__v_GEN_0 = @echo "  GEN   " $@;
-SOURCES = $(proxymux_SOURCES) $(tinyproxy_SOURCES) \
+SOURCES = $(libmux_a_SOURCES) $(tinyproxy_SOURCES) \
 	$(EXTRA_tinyproxy_SOURCES)
-DIST_SOURCES = $(proxymux_SOURCES) $(tinyproxy_SOURCES) \
+DIST_SOURCES = $(libmux_a_SOURCES) $(tinyproxy_SOURCES) \
 	$(EXTRA_tinyproxy_SOURCES)
 ETAGS = etags
 CTAGS = ctags
@@ -153,6 +159,7 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+RANLIB = @RANLIB@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
@@ -254,15 +261,14 @@ tinyproxy_SOURCES = \
 EXTRA_tinyproxy_SOURCES = filter.c filter.h \
 	remotefilter.c remotefilter.h \
 	reverse-proxy.c reverse-proxy.h \
+	mux.c mux.h \
 	transparent-proxy.c transparent-proxy.h
 
 tinyproxy_DEPENDENCIES = @ADDITIONAL_OBJECTS@
 tinyproxy_LDADD = @ADDITIONAL_OBJECTS@
-proxymux_SOURCES = \
-	mux.c
-
-proxymux_LDADD = -lpthread -lzmq
-proxymux_CFLAGS = -D_POSIX_SOURCE -D_GNU_SOURCE
+noinst_LIBRARIES = libmux.a
+libmux_a_SOURCES = mux.c mux.h
+libmux_a_CPPFLAGS = -D_GNU_SOURCE -D_POSIX_SOURCE
 EXTRA_DIST = \
 	authors.xsl
 
@@ -304,6 +310,13 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
+
+clean-noinstLIBRARIES:
+	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
+libmux.a: $(libmux_a_OBJECTS) $(libmux_a_DEPENDENCIES) $(EXTRA_libmux_a_DEPENDENCIES) 
+	$(AM_V_at)-rm -f libmux.a
+	$(AM_V_AR)$(libmux_a_AR) libmux.a $(libmux_a_OBJECTS) $(libmux_a_LIBADD)
+	$(AM_V_at)$(RANLIB) libmux.a
 install-sbinPROGRAMS: $(sbin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	test -z "$(sbindir)" || $(MKDIR_P) "$(DESTDIR)$(sbindir)"
@@ -341,9 +354,6 @@ uninstall-sbinPROGRAMS:
 
 clean-sbinPROGRAMS:
 	-test -z "$(sbin_PROGRAMS)" || rm -f $(sbin_PROGRAMS)
-proxymux$(EXEEXT): $(proxymux_OBJECTS) $(proxymux_DEPENDENCIES) $(EXTRA_proxymux_DEPENDENCIES) 
-	@rm -f proxymux$(EXEEXT)
-	$(AM_V_CCLD)$(proxymux_LINK) $(proxymux_OBJECTS) $(proxymux_LDADD) $(LIBS)
 tinyproxy$(EXEEXT): $(tinyproxy_OBJECTS) $(tinyproxy_DEPENDENCIES) $(EXTRA_tinyproxy_DEPENDENCIES) 
 	@rm -f tinyproxy$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(tinyproxy_OBJECTS) $(tinyproxy_LDADD) $(LIBS)
@@ -368,10 +378,11 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/heap.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/html-error.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/http-message.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libmux_a-mux.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/log.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mux.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/network.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/proxymux-mux.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/remotefilter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/reqs.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/reverse-proxy.Po@am__quote@
@@ -397,19 +408,19 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c `$(CYGPATH_W) '$<'`
 
-proxymux-mux.o: mux.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(proxymux_CFLAGS) $(CFLAGS) -MT proxymux-mux.o -MD -MP -MF $(DEPDIR)/proxymux-mux.Tpo -c -o proxymux-mux.o `test -f 'mux.c' || echo '$(srcdir)/'`mux.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/proxymux-mux.Tpo $(DEPDIR)/proxymux-mux.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='mux.c' object='proxymux-mux.o' libtool=no @AMDEPBACKSLASH@
+libmux_a-mux.o: mux.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libmux_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libmux_a-mux.o -MD -MP -MF $(DEPDIR)/libmux_a-mux.Tpo -c -o libmux_a-mux.o `test -f 'mux.c' || echo '$(srcdir)/'`mux.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libmux_a-mux.Tpo $(DEPDIR)/libmux_a-mux.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='mux.c' object='libmux_a-mux.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(proxymux_CFLAGS) $(CFLAGS) -c -o proxymux-mux.o `test -f 'mux.c' || echo '$(srcdir)/'`mux.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libmux_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libmux_a-mux.o `test -f 'mux.c' || echo '$(srcdir)/'`mux.c
 
-proxymux-mux.obj: mux.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(proxymux_CFLAGS) $(CFLAGS) -MT proxymux-mux.obj -MD -MP -MF $(DEPDIR)/proxymux-mux.Tpo -c -o proxymux-mux.obj `if test -f 'mux.c'; then $(CYGPATH_W) 'mux.c'; else $(CYGPATH_W) '$(srcdir)/mux.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/proxymux-mux.Tpo $(DEPDIR)/proxymux-mux.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='mux.c' object='proxymux-mux.obj' libtool=no @AMDEPBACKSLASH@
+libmux_a-mux.obj: mux.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libmux_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libmux_a-mux.obj -MD -MP -MF $(DEPDIR)/libmux_a-mux.Tpo -c -o libmux_a-mux.obj `if test -f 'mux.c'; then $(CYGPATH_W) 'mux.c'; else $(CYGPATH_W) '$(srcdir)/mux.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libmux_a-mux.Tpo $(DEPDIR)/libmux_a-mux.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='mux.c' object='libmux_a-mux.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(proxymux_CFLAGS) $(CFLAGS) -c -o proxymux-mux.obj `if test -f 'mux.c'; then $(CYGPATH_W) 'mux.c'; else $(CYGPATH_W) '$(srcdir)/mux.c'; fi`
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libmux_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libmux_a-mux.obj `if test -f 'mux.c'; then $(CYGPATH_W) 'mux.c'; else $(CYGPATH_W) '$(srcdir)/mux.c'; fi`
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
@@ -496,7 +507,7 @@ distdir: $(DISTFILES)
 check-am: all-am
 check: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) check-am
-all-am: Makefile $(PROGRAMS)
+all-am: Makefile $(LIBRARIES) $(PROGRAMS)
 installdirs:
 	for dir in "$(DESTDIR)$(sbindir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
@@ -535,7 +546,8 @@ maintainer-clean-generic:
 	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
 clean: clean-am
 
-clean-am: clean-generic clean-sbinPROGRAMS mostlyclean-am
+clean-am: clean-generic clean-noinstLIBRARIES clean-sbinPROGRAMS \
+	mostlyclean-am
 
 distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
@@ -605,17 +617,17 @@ uninstall-am: uninstall-sbinPROGRAMS
 .MAKE: all check install install-am install-strip
 
 .PHONY: CTAGS GTAGS all all-am check check-am clean clean-generic \
-	clean-sbinPROGRAMS ctags distclean distclean-compile \
-	distclean-generic distclean-tags distdir dvi dvi-am html \
-	html-am info info-am install install-am install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-sbinPROGRAMS install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic pdf pdf-am ps ps-am tags uninstall \
-	uninstall-am uninstall-sbinPROGRAMS
+	clean-noinstLIBRARIES clean-sbinPROGRAMS ctags distclean \
+	distclean-compile distclean-generic distclean-tags distdir dvi \
+	dvi-am html html-am info info-am install install-am \
+	install-data install-data-am install-dvi install-dvi-am \
+	install-exec install-exec-am install-html install-html-am \
+	install-info install-info-am install-man install-pdf \
+	install-pdf-am install-ps install-ps-am install-sbinPROGRAMS \
+	install-strip installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic pdf pdf-am ps ps-am \
+	tags uninstall uninstall-am uninstall-sbinPROGRAMS
 
 
 authors.c: $(top_srcdir)/authors.xml $(srcdir)/authors.xsl
