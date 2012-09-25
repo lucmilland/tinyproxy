@@ -144,10 +144,14 @@ AC_ARG_WITH(zeromq,
             [AC_HELP_STRING([--with-zeromq=prefix], [ZeroMQ installation directory])],
             [AC_DEFINE_UNQUOTED(TINYPROXY_ZEROMQ, "$withval")
 	     TINYPROXY_ZEROMQ="$withval"],
-	    [AC_DEFINE_UNQUOTED(TINYPROXY_ZEROMQ, "/usr/lib")
-	     TINYPROXY_ZEROMQ="/usr"])
-LDFLAGS="-L$TINYPROXY_ZEROMQ/lib $LDFLAGS"
-CPPFLAGS="-I$TINYPROXY_ZEROMQ/include $CPPFLAGS"
+	    [AC_DEFINE_UNQUOTED(TINYPROXY_ZEROMQ, "")
+	     TINYPROXY_ZEROMQ=""])
+
+if test x"$TINYPROXY_ZEROMQ" != x""; then
+   LDFLAGS="-L$TINYPROXY_ZEROMQ/lib $LDFLAGS"
+   CPPFLAGS="-I$TINYPROXY_ZEROMQ/include $CPPFLAGS"
+fi
+
 if test x"$remotefilter_enabled" = x"yes"; then
     ADDITIONAL_OBJECTS="$ADDITIONAL_OBJECTS remotefilter.o libmux.a"
     AC_DEFINE(REMOTE_FILTER_ENABLE)

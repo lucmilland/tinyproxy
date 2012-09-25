@@ -4472,14 +4472,18 @@ _ACEOF
 	     TINYPROXY_ZEROMQ="$withval"
 else
   cat >>confdefs.h <<_ACEOF
-#define TINYPROXY_ZEROMQ "/usr/lib"
+#define TINYPROXY_ZEROMQ ""
 _ACEOF
 
-	     TINYPROXY_ZEROMQ="/usr"
+	     TINYPROXY_ZEROMQ=""
 fi
 
-LDFLAGS="-L$TINYPROXY_ZEROMQ/lib $LDFLAGS"
-CPPFLAGS="-I$TINYPROXY_ZEROMQ/include $CPPFLAGS"
+
+if test x"$TINYPROXY_ZEROMQ" != x""; then
+   LDFLAGS="-L$TINYPROXY_ZEROMQ/lib $LDFLAGS"
+   CPPFLAGS="-I$TINYPROXY_ZEROMQ/include $CPPFLAGS"
+fi
+
 if test x"$remotefilter_enabled" = x"yes"; then
     ADDITIONAL_OBJECTS="$ADDITIONAL_OBJECTS remotefilter.o libmux.a"
     $as_echo "#define REMOTE_FILTER_ENABLE 1" >>confdefs.h
