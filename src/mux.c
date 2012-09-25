@@ -26,9 +26,7 @@ struct mux_context {
   int next_pending_id; /* next request id */
   pthread_mutex_t pendings_mutex;
 
-  pthread_t listener_thread;/* thread listening for responses from guardserv */
   pthread_t worker_thread;  /* thread listening for queries from tinyproxy */
-  void *notifier;         /* ZMQ socket between worker and listener threads */
 };
 typedef struct mux_context *mux_context_t;
 
@@ -164,10 +162,6 @@ mux_init(char *hostname) {
   /* init zmq sockets */
   ctx->zmq_context = zmq_init(1);
 
-  /* listen notifications from listener thread */
-  ctx->notifier = zmq_socket(ctx->zmq_context, ZMQ_PAIR);
-  zmq_bind(ctx->notifier, "inproc://notify");
-
   return ctx;
 }
 
@@ -179,95 +173,6 @@ mux_destroy(mux_context_t ctx) {
   if (ctx->zmq_context)
     zmq_term(ctx->zmq_context);
   free(ctx);
-}
-
-/*
- * response listener thread
- */
-static void *
-listener_thread(void *args) {
-  int ret;
-  int delta;
-  struct pending_req *req;
-  struct timeval now;
-  char id[1500];
-  char *buffer;
-  char *zmq_sender;
-  mux_context_t mux;  
-  void *notifier;
-  int rc;
-
-  mux = (mux_context_t)args;
-
-  /* connect to worker' socket */
-  notifier = zmq_socket(mux->zmq_context, ZMQ_PAIR);
-  rc = zmq_connect(notifier, "inproc://notify");
-  if (rc) {
-    log_message(LOG_ERR, "can't connect REQ : %s", strerror(-rc));
-    return NULL;
-  }    
-
-  while (1) {
-    /* wait for a response */
-    ret = recv(mux->server, &id, sizeof(id), 0);
-    /* fprintf(stderr, "answer : %d bytes : %s\n", ret, id); */
-
-    if (ret < 0) {
-      log_message(LOG_ERR, "error while reading response");
-      break;
-    } else if (ret == 0) {
-      log_message(LOG_ERR, "peer has closed connection");
-      break;
-    } else if (ret < 3) {
-      log_message(LOG_ERR, "response is too short");
-      break;
-    }
-
-    gettimeofday(&now, NULL);
-
-    /* isolate query id */
-    buffer = (char*)&id;
-    do {
-      buffer++;
-    } while (*buffer != ' ' && *buffer);
-    if (*buffer == ' ') *buffer++ = '\0';
-
-    /* split query id of the form id@zmq_sender */
-    zmq_sender = (char*)&id;
-    do {
-      zmq_sender++;
-    } while (*zmq_sender != '@' && *zmq_sender);
-    if (*zmq_sender == '@') 
-      zmq_sender++;
-    else {
-      log_message(LOG_ERR, "invalid response ID");
-      break;
-    }
-
-    /* lookup message in pendings */
-    pthread_mutex_lock(&mux->pendings_mutex);
-    if ( hashmap_entry_by_key(mux->pendings, id, (void **)&req) <= 0 ) {
-      /* request is not known : maybe a duplicate answer */
-      pthread_mutex_unlock(&mux->pendings_mutex);
-      continue;
-    }
-    free(req->request);
-    hashmap_remove(mux->pendings, id);
-    pthread_mutex_unlock(&mux->pendings_mutex);
-
-    delta = now.tv_sec * 1000000 + now.tv_usec -
-      req->time.tv_sec * 1000000 - req->time.tv_usec;
-      
-    log_message(LOG_INFO, "Request time %f ms. id = %s, sender = %s\n"
-		, delta / 1000., id, zmq_sender);
-
-    /* redistribute response to owner, via worker thread */
-    /* send caller's ID ... */
-    s_sendmore(notifier, zmq_sender);
-    s_sendmore(notifier, "");
-    s_send(notifier, buffer);      /* ... then response */
-  }
-  return NULL;
 }
 
 static void
@@ -377,23 +282,74 @@ handle_client(mux_context_t mux, void *clients) {
  * Handle listener response
  */
 static int
-handle_notifier(mux_context_t mux, void *clients) {
-  zmq_msg_t message;
-  int64_t more;
-  size_t more_size = sizeof (more);
+handle_listener(mux_context_t mux, void *clients) {
+  int ret;
+  int delta;
+  struct pending_req *req;
+  struct timeval now;
+  char id[1500];
+  char *buffer;
+  char *zmq_sender;
 
-  /* pass response parts to clients */
-  while (1) {
-    zmq_msg_init(&message);
-    zmq_recv(mux->notifier, &message, 0);
-    zmq_getsockopt(mux->notifier, ZMQ_RCVMORE, &more, &more_size);
-    if (!more) {
-      zmq_send(clients, &message, 0);
-      break;
-    }
-    zmq_send(clients, &message, ZMQ_SNDMORE);
-    zmq_msg_close(&message);
+  /* read for a response */
+  ret = recv(mux->server, &id, sizeof(id), 0);
+  /* fprintf(stderr, "answer : %d bytes : %s\n", ret, id); */
+
+  if (ret < 0) {
+    log_message(LOG_ERR, "error while reading response");
+    return -1;
+  } else if (ret == 0) {
+    log_message(LOG_ERR, "peer has closed connection");
+    return -1;
+  } else if (ret < 3) {
+    log_message(LOG_ERR, "response is too short");
+    return -1;
   }
+
+  gettimeofday(&now, NULL);
+
+  /* isolate query id */
+  buffer = (char*)&id;
+  do {
+    buffer++;
+  } while (*buffer != ' ' && *buffer);
+  if (*buffer == ' ') *buffer++ = '\0';
+
+  /* split query id of the form id@zmq_sender */
+  zmq_sender = (char*)&id;
+  do {
+    zmq_sender++;
+  } while (*zmq_sender != '@' && *zmq_sender);
+  if (*zmq_sender == '@') 
+    zmq_sender++;
+  else {
+    log_message(LOG_ERR, "invalid response ID");
+    return -1;
+  }
+
+  /* lookup message in pendings */
+  pthread_mutex_lock(&mux->pendings_mutex);
+  if ( hashmap_entry_by_key(mux->pendings, id, (void **)&req) <= 0 ) {
+    /* request is not known : maybe a duplicate answer */
+    pthread_mutex_unlock(&mux->pendings_mutex);
+    return 0;
+  }
+  free(req->request);
+  hashmap_remove(mux->pendings, id);
+  pthread_mutex_unlock(&mux->pendings_mutex);
+
+  delta = now.tv_sec * 1000000 + now.tv_usec -
+    req->time.tv_sec * 1000000 - req->time.tv_usec;
+      
+  log_message(LOG_INFO, "Request time %f ms. id = %s, sender = %s\n"
+	      , delta / 1000., id, zmq_sender);
+
+  /* redistribute response to owner, via worker thread */
+  /* send caller's ID ... */
+  s_sendmore(clients, zmq_sender);
+  s_sendmore(clients, "");
+  s_send(clients, buffer);      /* ... then response */
+
   return 0;
 }
 
@@ -417,8 +373,8 @@ worker_task(void *args) {
   pollers[0].events = ZMQ_POLLIN;
   pollers[0].revents = 0;
 
-  pollers[1].socket = mux->notifier;
-  pollers[1].fd = 0;
+  pollers[1].socket = NULL;
+  pollers[1].fd = mux->server;
   pollers[1].events = ZMQ_POLLIN;
   pollers[1].revents = 0;
 
@@ -430,12 +386,11 @@ worker_task(void *args) {
     }
     if (pollers[1].revents & ZMQ_POLLIN) {
       /* a request from response listener */
-      handle_notifier(mux, clients);
+      handle_listener(mux, clients);
     }
   }
 
   zmq_close(clients);
-  zmq_close(mux->notifier);
   pthread_exit(0);
 }
 
@@ -449,8 +404,7 @@ remote_filter_mux_init(char *hostname) {
     return NULL;
   }
   
-  /* create sending and receiving threads */
-  pthread_create (&mux->listener_thread, NULL, listener_thread, (void*)mux);
+  /* create worker thread */
   pthread_create (&mux->worker_thread , NULL, worker_task, (void*)mux);
 
   return mux;
@@ -461,7 +415,6 @@ remote_filter_mux_kill(void *args) {
   mux_context_t mux;
 
   mux = (mux_context_t)args;
-  pthread_cancel(mux->listener_thread);
   pthread_cancel(mux->worker_thread);
   mux_destroy(mux);
 }
