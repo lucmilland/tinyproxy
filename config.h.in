@@ -258,6 +258,9 @@
 /* Tinyproxy version number */
 #undef TINYPROXY_VERSION
 
+/* ZeroMQ installation directory. */
+#undef TINYPROXY_ZEROMQ
+
 /* Include support for using tinyproxy as a transparent proxy. */
 #undef TRANSPARENT_PROXY
 

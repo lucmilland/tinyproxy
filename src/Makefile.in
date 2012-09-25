@@ -69,12 +69,6 @@ CONFIG_CLEAN_VPATH_FILES =
 LIBRARIES = $(noinst_LIBRARIES)
 AR = ar
 ARFLAGS = cru
-AM_V_AR = $(am__v_AR_@AM_V@)
-am__v_AR_ = $(am__v_AR_@AM_DEFAULT_V@)
-am__v_AR_0 = @echo "  AR    " $@;
-AM_V_at = $(am__v_at_@AM_V@)
-am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
-am__v_at_0 = @
 libmux_a_AR = $(AR) $(ARFLAGS)
 libmux_a_LIBADD =
 am_libmux_a_OBJECTS = libmux_a-mux.$(OBJEXT)
@@ -98,22 +92,10 @@ DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 am__mv = mv -f
-AM_V_lt = $(am__v_lt_@AM_V@)
-am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
-am__v_lt_0 = --silent
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-AM_V_CC = $(am__v_CC_@AM_V@)
-am__v_CC_ = $(am__v_CC_@AM_DEFAULT_V@)
-am__v_CC_0 = @echo "  CC    " $@;
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-AM_V_CCLD = $(am__v_CCLD_@AM_V@)
-am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
-am__v_CCLD_0 = @echo "  CCLD  " $@;
-AM_V_GEN = $(am__v_GEN_@AM_V@)
-am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
-am__v_GEN_0 = @echo "  GEN   " $@;
 SOURCES = $(libmux_a_SOURCES) $(tinyproxy_SOURCES) \
 	$(EXTRA_tinyproxy_SOURCES)
 DIST_SOURCES = $(libmux_a_SOURCES) $(tinyproxy_SOURCES) \
@@ -124,7 +106,6 @@ DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 ADDITIONAL_OBJECTS = @ADDITIONAL_OBJECTS@
 AMTAR = @AMTAR@
-AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
@@ -319,9 +300,9 @@ $(am__aclocal_m4_deps):
 clean-noinstLIBRARIES:
 	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
 libmux.a: $(libmux_a_OBJECTS) $(libmux_a_DEPENDENCIES) $(EXTRA_libmux_a_DEPENDENCIES) 
-	$(AM_V_at)-rm -f libmux.a
-	$(AM_V_AR)$(libmux_a_AR) libmux.a $(libmux_a_OBJECTS) $(libmux_a_LIBADD)
-	$(AM_V_at)$(RANLIB) libmux.a
+	-rm -f libmux.a
+	$(libmux_a_AR) libmux.a $(libmux_a_OBJECTS) $(libmux_a_LIBADD)
+	$(RANLIB) libmux.a
 install-sbinPROGRAMS: $(sbin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	test -z "$(sbindir)" || $(MKDIR_P) "$(DESTDIR)$(sbindir)"
@@ -361,7 +342,7 @@ clean-sbinPROGRAMS:
 	-test -z "$(sbin_PROGRAMS)" || rm -f $(sbin_PROGRAMS)
 tinyproxy$(EXEEXT): $(tinyproxy_OBJECTS) $(tinyproxy_DEPENDENCIES) $(EXTRA_tinyproxy_DEPENDENCIES) 
 	@rm -f tinyproxy$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(tinyproxy_OBJECTS) $(tinyproxy_LDADD) $(LIBS)
+	$(LINK) $(tinyproxy_OBJECTS) $(tinyproxy_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -400,424 +381,424 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tinyproxy-vector.Po@am__quote@
 
 .c.o:
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c $<
+@am__fastdepCC_FALSE@	$(COMPILE) -c $<
 
 .c.obj:
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c `$(CYGPATH_W) '$<'`
+@am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
 
 libmux_a-mux.o: mux.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libmux_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libmux_a-mux.o -MD -MP -MF $(DEPDIR)/libmux_a-mux.Tpo -c -o libmux_a-mux.o `test -f 'mux.c' || echo '$(srcdir)/'`mux.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libmux_a-mux.Tpo $(DEPDIR)/libmux_a-mux.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='mux.c' object='libmux_a-mux.o' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libmux_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libmux_a-mux.o -MD -MP -MF $(DEPDIR)/libmux_a-mux.Tpo -c -o libmux_a-mux.o `test -f 'mux.c' || echo '$(srcdir)/'`mux.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libmux_a-mux.Tpo $(DEPDIR)/libmux_a-mux.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mux.c' object='libmux_a-mux.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libmux_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libmux_a-mux.o `test -f 'mux.c' || echo '$(srcdir)/'`mux.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libmux_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libmux_a-mux.o `test -f 'mux.c' || echo '$(srcdir)/'`mux.c
 
 libmux_a-mux.obj: mux.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libmux_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libmux_a-mux.obj -MD -MP -MF $(DEPDIR)/libmux_a-mux.Tpo -c -o libmux_a-mux.obj `if test -f 'mux.c'; then $(CYGPATH_W) 'mux.c'; else $(CYGPATH_W) '$(srcdir)/mux.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libmux_a-mux.Tpo $(DEPDIR)/libmux_a-mux.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='mux.c' object='libmux_a-mux.obj' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libmux_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libmux_a-mux.obj -MD -MP -MF $(DEPDIR)/libmux_a-mux.Tpo -c -o libmux_a-mux.obj `if test -f 'mux.c'; then $(CYGPATH_W) 'mux.c'; else $(CYGPATH_W) '$(srcdir)/mux.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libmux_a-mux.Tpo $(DEPDIR)/libmux_a-mux.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mux.c' object='libmux_a-mux.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libmux_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libmux_a-mux.obj `if test -f 'mux.c'; then $(CYGPATH_W) 'mux.c'; else $(CYGPATH_W) '$(srcdir)/mux.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libmux_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libmux_a-mux.obj `if test -f 'mux.c'; then $(CYGPATH_W) 'mux.c'; else $(CYGPATH_W) '$(srcdir)/mux.c'; fi`
 
 tinyproxy-acl.o: acl.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-acl.o -MD -MP -MF $(DEPDIR)/tinyproxy-acl.Tpo -c -o tinyproxy-acl.o `test -f 'acl.c' || echo '$(srcdir)/'`acl.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-acl.Tpo $(DEPDIR)/tinyproxy-acl.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='acl.c' object='tinyproxy-acl.o' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-acl.o -MD -MP -MF $(DEPDIR)/tinyproxy-acl.Tpo -c -o tinyproxy-acl.o `test -f 'acl.c' || echo '$(srcdir)/'`acl.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-acl.Tpo $(DEPDIR)/tinyproxy-acl.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='acl.c' object='tinyproxy-acl.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-acl.o `test -f 'acl.c' || echo '$(srcdir)/'`acl.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-acl.o `test -f 'acl.c' || echo '$(srcdir)/'`acl.c
 
 tinyproxy-acl.obj: acl.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-acl.obj -MD -MP -MF $(DEPDIR)/tinyproxy-acl.Tpo -c -o tinyproxy-acl.obj `if test -f 'acl.c'; then $(CYGPATH_W) 'acl.c'; else $(CYGPATH_W) '$(srcdir)/acl.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-acl.Tpo $(DEPDIR)/tinyproxy-acl.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='acl.c' object='tinyproxy-acl.obj' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-acl.obj -MD -MP -MF $(DEPDIR)/tinyproxy-acl.Tpo -c -o tinyproxy-acl.obj `if test -f 'acl.c'; then $(CYGPATH_W) 'acl.c'; else $(CYGPATH_W) '$(srcdir)/acl.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-acl.Tpo $(DEPDIR)/tinyproxy-acl.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='acl.c' object='tinyproxy-acl.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-acl.obj `if test -f 'acl.c'; then $(CYGPATH_W) 'acl.c'; else $(CYGPATH_W) '$(srcdir)/acl.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-acl.obj `if test -f 'acl.c'; then $(CYGPATH_W) 'acl.c'; else $(CYGPATH_W) '$(srcdir)/acl.c'; fi`
 
 tinyproxy-anonymous.o: anonymous.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-anonymous.o -MD -MP -MF $(DEPDIR)/tinyproxy-anonymous.Tpo -c -o tinyproxy-anonymous.o `test -f 'anonymous.c' || echo '$(srcdir)/'`anonymous.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-anonymous.Tpo $(DEPDIR)/tinyproxy-anonymous.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='anonymous.c' object='tinyproxy-anonymous.o' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-anonymous.o -MD -MP -MF $(DEPDIR)/tinyproxy-anonymous.Tpo -c -o tinyproxy-anonymous.o `test -f 'anonymous.c' || echo '$(srcdir)/'`anonymous.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-anonymous.Tpo $(DEPDIR)/tinyproxy-anonymous.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='anonymous.c' object='tinyproxy-anonymous.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-anonymous.o `test -f 'anonymous.c' || echo '$(srcdir)/'`anonymous.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-anonymous.o `test -f 'anonymous.c' || echo '$(srcdir)/'`anonymous.c
 
 tinyproxy-anonymous.obj: anonymous.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-anonymous.obj -MD -MP -MF $(DEPDIR)/tinyproxy-anonymous.Tpo -c -o tinyproxy-anonymous.obj `if test -f 'anonymous.c'; then $(CYGPATH_W) 'anonymous.c'; else $(CYGPATH_W) '$(srcdir)/anonymous.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-anonymous.Tpo $(DEPDIR)/tinyproxy-anonymous.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='anonymous.c' object='tinyproxy-anonymous.obj' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-anonymous.obj -MD -MP -MF $(DEPDIR)/tinyproxy-anonymous.Tpo -c -o tinyproxy-anonymous.obj `if test -f 'anonymous.c'; then $(CYGPATH_W) 'anonymous.c'; else $(CYGPATH_W) '$(srcdir)/anonymous.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-anonymous.Tpo $(DEPDIR)/tinyproxy-anonymous.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='anonymous.c' object='tinyproxy-anonymous.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-anonymous.obj `if test -f 'anonymous.c'; then $(CYGPATH_W) 'anonymous.c'; else $(CYGPATH_W) '$(srcdir)/anonymous.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-anonymous.obj `if test -f 'anonymous.c'; then $(CYGPATH_W) 'anonymous.c'; else $(CYGPATH_W) '$(srcdir)/anonymous.c'; fi`
 
 tinyproxy-authors.o: authors.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-authors.o -MD -MP -MF $(DEPDIR)/tinyproxy-authors.Tpo -c -o tinyproxy-authors.o `test -f 'authors.c' || echo '$(srcdir)/'`authors.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-authors.Tpo $(DEPDIR)/tinyproxy-authors.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='authors.c' object='tinyproxy-authors.o' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-authors.o -MD -MP -MF $(DEPDIR)/tinyproxy-authors.Tpo -c -o tinyproxy-authors.o `test -f 'authors.c' || echo '$(srcdir)/'`authors.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-authors.Tpo $(DEPDIR)/tinyproxy-authors.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='authors.c' object='tinyproxy-authors.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-authors.o `test -f 'authors.c' || echo '$(srcdir)/'`authors.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-authors.o `test -f 'authors.c' || echo '$(srcdir)/'`authors.c
 
 tinyproxy-authors.obj: authors.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-authors.obj -MD -MP -MF $(DEPDIR)/tinyproxy-authors.Tpo -c -o tinyproxy-authors.obj `if test -f 'authors.c'; then $(CYGPATH_W) 'authors.c'; else $(CYGPATH_W) '$(srcdir)/authors.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-authors.Tpo $(DEPDIR)/tinyproxy-authors.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='authors.c' object='tinyproxy-authors.obj' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-authors.obj -MD -MP -MF $(DEPDIR)/tinyproxy-authors.Tpo -c -o tinyproxy-authors.obj `if test -f 'authors.c'; then $(CYGPATH_W) 'authors.c'; else $(CYGPATH_W) '$(srcdir)/authors.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-authors.Tpo $(DEPDIR)/tinyproxy-authors.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='authors.c' object='tinyproxy-authors.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-authors.obj `if test -f 'authors.c'; then $(CYGPATH_W) 'authors.c'; else $(CYGPATH_W) '$(srcdir)/authors.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-authors.obj `if test -f 'authors.c'; then $(CYGPATH_W) 'authors.c'; else $(CYGPATH_W) '$(srcdir)/authors.c'; fi`
 
 tinyproxy-buffer.o: buffer.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-buffer.o -MD -MP -MF $(DEPDIR)/tinyproxy-buffer.Tpo -c -o tinyproxy-buffer.o `test -f 'buffer.c' || echo '$(srcdir)/'`buffer.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-buffer.Tpo $(DEPDIR)/tinyproxy-buffer.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='buffer.c' object='tinyproxy-buffer.o' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-buffer.o -MD -MP -MF $(DEPDIR)/tinyproxy-buffer.Tpo -c -o tinyproxy-buffer.o `test -f 'buffer.c' || echo '$(srcdir)/'`buffer.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-buffer.Tpo $(DEPDIR)/tinyproxy-buffer.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='buffer.c' object='tinyproxy-buffer.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-buffer.o `test -f 'buffer.c' || echo '$(srcdir)/'`buffer.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-buffer.o `test -f 'buffer.c' || echo '$(srcdir)/'`buffer.c
 
 tinyproxy-buffer.obj: buffer.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-buffer.obj -MD -MP -MF $(DEPDIR)/tinyproxy-buffer.Tpo -c -o tinyproxy-buffer.obj `if test -f 'buffer.c'; then $(CYGPATH_W) 'buffer.c'; else $(CYGPATH_W) '$(srcdir)/buffer.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-buffer.Tpo $(DEPDIR)/tinyproxy-buffer.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='buffer.c' object='tinyproxy-buffer.obj' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-buffer.obj -MD -MP -MF $(DEPDIR)/tinyproxy-buffer.Tpo -c -o tinyproxy-buffer.obj `if test -f 'buffer.c'; then $(CYGPATH_W) 'buffer.c'; else $(CYGPATH_W) '$(srcdir)/buffer.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-buffer.Tpo $(DEPDIR)/tinyproxy-buffer.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='buffer.c' object='tinyproxy-buffer.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-buffer.obj `if test -f 'buffer.c'; then $(CYGPATH_W) 'buffer.c'; else $(CYGPATH_W) '$(srcdir)/buffer.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-buffer.obj `if test -f 'buffer.c'; then $(CYGPATH_W) 'buffer.c'; else $(CYGPATH_W) '$(srcdir)/buffer.c'; fi`
 
 tinyproxy-child.o: child.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-child.o -MD -MP -MF $(DEPDIR)/tinyproxy-child.Tpo -c -o tinyproxy-child.o `test -f 'child.c' || echo '$(srcdir)/'`child.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-child.Tpo $(DEPDIR)/tinyproxy-child.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='child.c' object='tinyproxy-child.o' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-child.o -MD -MP -MF $(DEPDIR)/tinyproxy-child.Tpo -c -o tinyproxy-child.o `test -f 'child.c' || echo '$(srcdir)/'`child.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-child.Tpo $(DEPDIR)/tinyproxy-child.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='child.c' object='tinyproxy-child.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-child.o `test -f 'child.c' || echo '$(srcdir)/'`child.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-child.o `test -f 'child.c' || echo '$(srcdir)/'`child.c
 
 tinyproxy-child.obj: child.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-child.obj -MD -MP -MF $(DEPDIR)/tinyproxy-child.Tpo -c -o tinyproxy-child.obj `if test -f 'child.c'; then $(CYGPATH_W) 'child.c'; else $(CYGPATH_W) '$(srcdir)/child.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-child.Tpo $(DEPDIR)/tinyproxy-child.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='child.c' object='tinyproxy-child.obj' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-child.obj -MD -MP -MF $(DEPDIR)/tinyproxy-child.Tpo -c -o tinyproxy-child.obj `if test -f 'child.c'; then $(CYGPATH_W) 'child.c'; else $(CYGPATH_W) '$(srcdir)/child.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-child.Tpo $(DEPDIR)/tinyproxy-child.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='child.c' object='tinyproxy-child.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-child.obj `if test -f 'child.c'; then $(CYGPATH_W) 'child.c'; else $(CYGPATH_W) '$(srcdir)/child.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-child.obj `if test -f 'child.c'; then $(CYGPATH_W) 'child.c'; else $(CYGPATH_W) '$(srcdir)/child.c'; fi`
 
 tinyproxy-conf.o: conf.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-conf.o -MD -MP -MF $(DEPDIR)/tinyproxy-conf.Tpo -c -o tinyproxy-conf.o `test -f 'conf.c' || echo '$(srcdir)/'`conf.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-conf.Tpo $(DEPDIR)/tinyproxy-conf.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='conf.c' object='tinyproxy-conf.o' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-conf.o -MD -MP -MF $(DEPDIR)/tinyproxy-conf.Tpo -c -o tinyproxy-conf.o `test -f 'conf.c' || echo '$(srcdir)/'`conf.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-conf.Tpo $(DEPDIR)/tinyproxy-conf.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='conf.c' object='tinyproxy-conf.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-conf.o `test -f 'conf.c' || echo '$(srcdir)/'`conf.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-conf.o `test -f 'conf.c' || echo '$(srcdir)/'`conf.c
 
 tinyproxy-conf.obj: conf.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-conf.obj -MD -MP -MF $(DEPDIR)/tinyproxy-conf.Tpo -c -o tinyproxy-conf.obj `if test -f 'conf.c'; then $(CYGPATH_W) 'conf.c'; else $(CYGPATH_W) '$(srcdir)/conf.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-conf.Tpo $(DEPDIR)/tinyproxy-conf.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='conf.c' object='tinyproxy-conf.obj' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-conf.obj -MD -MP -MF $(DEPDIR)/tinyproxy-conf.Tpo -c -o tinyproxy-conf.obj `if test -f 'conf.c'; then $(CYGPATH_W) 'conf.c'; else $(CYGPATH_W) '$(srcdir)/conf.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-conf.Tpo $(DEPDIR)/tinyproxy-conf.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='conf.c' object='tinyproxy-conf.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-conf.obj `if test -f 'conf.c'; then $(CYGPATH_W) 'conf.c'; else $(CYGPATH_W) '$(srcdir)/conf.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-conf.obj `if test -f 'conf.c'; then $(CYGPATH_W) 'conf.c'; else $(CYGPATH_W) '$(srcdir)/conf.c'; fi`
 
 tinyproxy-conns.o: conns.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-conns.o -MD -MP -MF $(DEPDIR)/tinyproxy-conns.Tpo -c -o tinyproxy-conns.o `test -f 'conns.c' || echo '$(srcdir)/'`conns.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-conns.Tpo $(DEPDIR)/tinyproxy-conns.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='conns.c' object='tinyproxy-conns.o' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-conns.o -MD -MP -MF $(DEPDIR)/tinyproxy-conns.Tpo -c -o tinyproxy-conns.o `test -f 'conns.c' || echo '$(srcdir)/'`conns.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-conns.Tpo $(DEPDIR)/tinyproxy-conns.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='conns.c' object='tinyproxy-conns.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-conns.o `test -f 'conns.c' || echo '$(srcdir)/'`conns.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-conns.o `test -f 'conns.c' || echo '$(srcdir)/'`conns.c
 
 tinyproxy-conns.obj: conns.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-conns.obj -MD -MP -MF $(DEPDIR)/tinyproxy-conns.Tpo -c -o tinyproxy-conns.obj `if test -f 'conns.c'; then $(CYGPATH_W) 'conns.c'; else $(CYGPATH_W) '$(srcdir)/conns.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-conns.Tpo $(DEPDIR)/tinyproxy-conns.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='conns.c' object='tinyproxy-conns.obj' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-conns.obj -MD -MP -MF $(DEPDIR)/tinyproxy-conns.Tpo -c -o tinyproxy-conns.obj `if test -f 'conns.c'; then $(CYGPATH_W) 'conns.c'; else $(CYGPATH_W) '$(srcdir)/conns.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-conns.Tpo $(DEPDIR)/tinyproxy-conns.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='conns.c' object='tinyproxy-conns.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-conns.obj `if test -f 'conns.c'; then $(CYGPATH_W) 'conns.c'; else $(CYGPATH_W) '$(srcdir)/conns.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-conns.obj `if test -f 'conns.c'; then $(CYGPATH_W) 'conns.c'; else $(CYGPATH_W) '$(srcdir)/conns.c'; fi`
 
 tinyproxy-daemon.o: daemon.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-daemon.o -MD -MP -MF $(DEPDIR)/tinyproxy-daemon.Tpo -c -o tinyproxy-daemon.o `test -f 'daemon.c' || echo '$(srcdir)/'`daemon.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-daemon.Tpo $(DEPDIR)/tinyproxy-daemon.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='daemon.c' object='tinyproxy-daemon.o' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-daemon.o -MD -MP -MF $(DEPDIR)/tinyproxy-daemon.Tpo -c -o tinyproxy-daemon.o `test -f 'daemon.c' || echo '$(srcdir)/'`daemon.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-daemon.Tpo $(DEPDIR)/tinyproxy-daemon.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daemon.c' object='tinyproxy-daemon.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-daemon.o `test -f 'daemon.c' || echo '$(srcdir)/'`daemon.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-daemon.o `test -f 'daemon.c' || echo '$(srcdir)/'`daemon.c
 
 tinyproxy-daemon.obj: daemon.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-daemon.obj -MD -MP -MF $(DEPDIR)/tinyproxy-daemon.Tpo -c -o tinyproxy-daemon.obj `if test -f 'daemon.c'; then $(CYGPATH_W) 'daemon.c'; else $(CYGPATH_W) '$(srcdir)/daemon.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-daemon.Tpo $(DEPDIR)/tinyproxy-daemon.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='daemon.c' object='tinyproxy-daemon.obj' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-daemon.obj -MD -MP -MF $(DEPDIR)/tinyproxy-daemon.Tpo -c -o tinyproxy-daemon.obj `if test -f 'daemon.c'; then $(CYGPATH_W) 'daemon.c'; else $(CYGPATH_W) '$(srcdir)/daemon.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-daemon.Tpo $(DEPDIR)/tinyproxy-daemon.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daemon.c' object='tinyproxy-daemon.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-daemon.obj `if test -f 'daemon.c'; then $(CYGPATH_W) 'daemon.c'; else $(CYGPATH_W) '$(srcdir)/daemon.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-daemon.obj `if test -f 'daemon.c'; then $(CYGPATH_W) 'daemon.c'; else $(CYGPATH_W) '$(srcdir)/daemon.c'; fi`
 
 tinyproxy-hashmap.o: hashmap.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-hashmap.o -MD -MP -MF $(DEPDIR)/tinyproxy-hashmap.Tpo -c -o tinyproxy-hashmap.o `test -f 'hashmap.c' || echo '$(srcdir)/'`hashmap.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-hashmap.Tpo $(DEPDIR)/tinyproxy-hashmap.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='hashmap.c' object='tinyproxy-hashmap.o' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-hashmap.o -MD -MP -MF $(DEPDIR)/tinyproxy-hashmap.Tpo -c -o tinyproxy-hashmap.o `test -f 'hashmap.c' || echo '$(srcdir)/'`hashmap.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-hashmap.Tpo $(DEPDIR)/tinyproxy-hashmap.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='hashmap.c' object='tinyproxy-hashmap.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-hashmap.o `test -f 'hashmap.c' || echo '$(srcdir)/'`hashmap.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-hashmap.o `test -f 'hashmap.c' || echo '$(srcdir)/'`hashmap.c
 
 tinyproxy-hashmap.obj: hashmap.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-hashmap.obj -MD -MP -MF $(DEPDIR)/tinyproxy-hashmap.Tpo -c -o tinyproxy-hashmap.obj `if test -f 'hashmap.c'; then $(CYGPATH_W) 'hashmap.c'; else $(CYGPATH_W) '$(srcdir)/hashmap.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-hashmap.Tpo $(DEPDIR)/tinyproxy-hashmap.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='hashmap.c' object='tinyproxy-hashmap.obj' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-hashmap.obj -MD -MP -MF $(DEPDIR)/tinyproxy-hashmap.Tpo -c -o tinyproxy-hashmap.obj `if test -f 'hashmap.c'; then $(CYGPATH_W) 'hashmap.c'; else $(CYGPATH_W) '$(srcdir)/hashmap.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-hashmap.Tpo $(DEPDIR)/tinyproxy-hashmap.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='hashmap.c' object='tinyproxy-hashmap.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-hashmap.obj `if test -f 'hashmap.c'; then $(CYGPATH_W) 'hashmap.c'; else $(CYGPATH_W) '$(srcdir)/hashmap.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-hashmap.obj `if test -f 'hashmap.c'; then $(CYGPATH_W) 'hashmap.c'; else $(CYGPATH_W) '$(srcdir)/hashmap.c'; fi`
 
 tinyproxy-heap.o: heap.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-heap.o -MD -MP -MF $(DEPDIR)/tinyproxy-heap.Tpo -c -o tinyproxy-heap.o `test -f 'heap.c' || echo '$(srcdir)/'`heap.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-heap.Tpo $(DEPDIR)/tinyproxy-heap.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='heap.c' object='tinyproxy-heap.o' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-heap.o -MD -MP -MF $(DEPDIR)/tinyproxy-heap.Tpo -c -o tinyproxy-heap.o `test -f 'heap.c' || echo '$(srcdir)/'`heap.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-heap.Tpo $(DEPDIR)/tinyproxy-heap.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='heap.c' object='tinyproxy-heap.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-heap.o `test -f 'heap.c' || echo '$(srcdir)/'`heap.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-heap.o `test -f 'heap.c' || echo '$(srcdir)/'`heap.c
 
 tinyproxy-heap.obj: heap.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-heap.obj -MD -MP -MF $(DEPDIR)/tinyproxy-heap.Tpo -c -o tinyproxy-heap.obj `if test -f 'heap.c'; then $(CYGPATH_W) 'heap.c'; else $(CYGPATH_W) '$(srcdir)/heap.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-heap.Tpo $(DEPDIR)/tinyproxy-heap.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='heap.c' object='tinyproxy-heap.obj' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-heap.obj -MD -MP -MF $(DEPDIR)/tinyproxy-heap.Tpo -c -o tinyproxy-heap.obj `if test -f 'heap.c'; then $(CYGPATH_W) 'heap.c'; else $(CYGPATH_W) '$(srcdir)/heap.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-heap.Tpo $(DEPDIR)/tinyproxy-heap.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='heap.c' object='tinyproxy-heap.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-heap.obj `if test -f 'heap.c'; then $(CYGPATH_W) 'heap.c'; else $(CYGPATH_W) '$(srcdir)/heap.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-heap.obj `if test -f 'heap.c'; then $(CYGPATH_W) 'heap.c'; else $(CYGPATH_W) '$(srcdir)/heap.c'; fi`
 
 tinyproxy-html-error.o: html-error.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-html-error.o -MD -MP -MF $(DEPDIR)/tinyproxy-html-error.Tpo -c -o tinyproxy-html-error.o `test -f 'html-error.c' || echo '$(srcdir)/'`html-error.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-html-error.Tpo $(DEPDIR)/tinyproxy-html-error.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='html-error.c' object='tinyproxy-html-error.o' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-html-error.o -MD -MP -MF $(DEPDIR)/tinyproxy-html-error.Tpo -c -o tinyproxy-html-error.o `test -f 'html-error.c' || echo '$(srcdir)/'`html-error.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-html-error.Tpo $(DEPDIR)/tinyproxy-html-error.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='html-error.c' object='tinyproxy-html-error.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-html-error.o `test -f 'html-error.c' || echo '$(srcdir)/'`html-error.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-html-error.o `test -f 'html-error.c' || echo '$(srcdir)/'`html-error.c
 
 tinyproxy-html-error.obj: html-error.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-html-error.obj -MD -MP -MF $(DEPDIR)/tinyproxy-html-error.Tpo -c -o tinyproxy-html-error.obj `if test -f 'html-error.c'; then $(CYGPATH_W) 'html-error.c'; else $(CYGPATH_W) '$(srcdir)/html-error.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-html-error.Tpo $(DEPDIR)/tinyproxy-html-error.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='html-error.c' object='tinyproxy-html-error.obj' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-html-error.obj -MD -MP -MF $(DEPDIR)/tinyproxy-html-error.Tpo -c -o tinyproxy-html-error.obj `if test -f 'html-error.c'; then $(CYGPATH_W) 'html-error.c'; else $(CYGPATH_W) '$(srcdir)/html-error.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-html-error.Tpo $(DEPDIR)/tinyproxy-html-error.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='html-error.c' object='tinyproxy-html-error.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-html-error.obj `if test -f 'html-error.c'; then $(CYGPATH_W) 'html-error.c'; else $(CYGPATH_W) '$(srcdir)/html-error.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-html-error.obj `if test -f 'html-error.c'; then $(CYGPATH_W) 'html-error.c'; else $(CYGPATH_W) '$(srcdir)/html-error.c'; fi`
 
 tinyproxy-http-message.o: http-message.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-http-message.o -MD -MP -MF $(DEPDIR)/tinyproxy-http-message.Tpo -c -o tinyproxy-http-message.o `test -f 'http-message.c' || echo '$(srcdir)/'`http-message.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-http-message.Tpo $(DEPDIR)/tinyproxy-http-message.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='http-message.c' object='tinyproxy-http-message.o' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-http-message.o -MD -MP -MF $(DEPDIR)/tinyproxy-http-message.Tpo -c -o tinyproxy-http-message.o `test -f 'http-message.c' || echo '$(srcdir)/'`http-message.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-http-message.Tpo $(DEPDIR)/tinyproxy-http-message.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='http-message.c' object='tinyproxy-http-message.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-http-message.o `test -f 'http-message.c' || echo '$(srcdir)/'`http-message.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-http-message.o `test -f 'http-message.c' || echo '$(srcdir)/'`http-message.c
 
 tinyproxy-http-message.obj: http-message.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-http-message.obj -MD -MP -MF $(DEPDIR)/tinyproxy-http-message.Tpo -c -o tinyproxy-http-message.obj `if test -f 'http-message.c'; then $(CYGPATH_W) 'http-message.c'; else $(CYGPATH_W) '$(srcdir)/http-message.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-http-message.Tpo $(DEPDIR)/tinyproxy-http-message.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='http-message.c' object='tinyproxy-http-message.obj' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-http-message.obj -MD -MP -MF $(DEPDIR)/tinyproxy-http-message.Tpo -c -o tinyproxy-http-message.obj `if test -f 'http-message.c'; then $(CYGPATH_W) 'http-message.c'; else $(CYGPATH_W) '$(srcdir)/http-message.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-http-message.Tpo $(DEPDIR)/tinyproxy-http-message.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='http-message.c' object='tinyproxy-http-message.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-http-message.obj `if test -f 'http-message.c'; then $(CYGPATH_W) 'http-message.c'; else $(CYGPATH_W) '$(srcdir)/http-message.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-http-message.obj `if test -f 'http-message.c'; then $(CYGPATH_W) 'http-message.c'; else $(CYGPATH_W) '$(srcdir)/http-message.c'; fi`
 
 tinyproxy-log.o: log.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-log.o -MD -MP -MF $(DEPDIR)/tinyproxy-log.Tpo -c -o tinyproxy-log.o `test -f 'log.c' || echo '$(srcdir)/'`log.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-log.Tpo $(DEPDIR)/tinyproxy-log.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='log.c' object='tinyproxy-log.o' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-log.o -MD -MP -MF $(DEPDIR)/tinyproxy-log.Tpo -c -o tinyproxy-log.o `test -f 'log.c' || echo '$(srcdir)/'`log.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-log.Tpo $(DEPDIR)/tinyproxy-log.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='log.c' object='tinyproxy-log.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-log.o `test -f 'log.c' || echo '$(srcdir)/'`log.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-log.o `test -f 'log.c' || echo '$(srcdir)/'`log.c
 
 tinyproxy-log.obj: log.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-log.obj -MD -MP -MF $(DEPDIR)/tinyproxy-log.Tpo -c -o tinyproxy-log.obj `if test -f 'log.c'; then $(CYGPATH_W) 'log.c'; else $(CYGPATH_W) '$(srcdir)/log.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-log.Tpo $(DEPDIR)/tinyproxy-log.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='log.c' object='tinyproxy-log.obj' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-log.obj -MD -MP -MF $(DEPDIR)/tinyproxy-log.Tpo -c -o tinyproxy-log.obj `if test -f 'log.c'; then $(CYGPATH_W) 'log.c'; else $(CYGPATH_W) '$(srcdir)/log.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-log.Tpo $(DEPDIR)/tinyproxy-log.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='log.c' object='tinyproxy-log.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-log.obj `if test -f 'log.c'; then $(CYGPATH_W) 'log.c'; else $(CYGPATH_W) '$(srcdir)/log.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-log.obj `if test -f 'log.c'; then $(CYGPATH_W) 'log.c'; else $(CYGPATH_W) '$(srcdir)/log.c'; fi`
 
 tinyproxy-network.o: network.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-network.o -MD -MP -MF $(DEPDIR)/tinyproxy-network.Tpo -c -o tinyproxy-network.o `test -f 'network.c' || echo '$(srcdir)/'`network.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-network.Tpo $(DEPDIR)/tinyproxy-network.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='network.c' object='tinyproxy-network.o' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-network.o -MD -MP -MF $(DEPDIR)/tinyproxy-network.Tpo -c -o tinyproxy-network.o `test -f 'network.c' || echo '$(srcdir)/'`network.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-network.Tpo $(DEPDIR)/tinyproxy-network.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='network.c' object='tinyproxy-network.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-network.o `test -f 'network.c' || echo '$(srcdir)/'`network.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-network.o `test -f 'network.c' || echo '$(srcdir)/'`network.c
 
 tinyproxy-network.obj: network.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-network.obj -MD -MP -MF $(DEPDIR)/tinyproxy-network.Tpo -c -o tinyproxy-network.obj `if test -f 'network.c'; then $(CYGPATH_W) 'network.c'; else $(CYGPATH_W) '$(srcdir)/network.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-network.Tpo $(DEPDIR)/tinyproxy-network.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='network.c' object='tinyproxy-network.obj' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-network.obj -MD -MP -MF $(DEPDIR)/tinyproxy-network.Tpo -c -o tinyproxy-network.obj `if test -f 'network.c'; then $(CYGPATH_W) 'network.c'; else $(CYGPATH_W) '$(srcdir)/network.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-network.Tpo $(DEPDIR)/tinyproxy-network.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='network.c' object='tinyproxy-network.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-network.obj `if test -f 'network.c'; then $(CYGPATH_W) 'network.c'; else $(CYGPATH_W) '$(srcdir)/network.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-network.obj `if test -f 'network.c'; then $(CYGPATH_W) 'network.c'; else $(CYGPATH_W) '$(srcdir)/network.c'; fi`
 
 tinyproxy-reqs.o: reqs.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-reqs.o -MD -MP -MF $(DEPDIR)/tinyproxy-reqs.Tpo -c -o tinyproxy-reqs.o `test -f 'reqs.c' || echo '$(srcdir)/'`reqs.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-reqs.Tpo $(DEPDIR)/tinyproxy-reqs.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='reqs.c' object='tinyproxy-reqs.o' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-reqs.o -MD -MP -MF $(DEPDIR)/tinyproxy-reqs.Tpo -c -o tinyproxy-reqs.o `test -f 'reqs.c' || echo '$(srcdir)/'`reqs.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-reqs.Tpo $(DEPDIR)/tinyproxy-reqs.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='reqs.c' object='tinyproxy-reqs.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-reqs.o `test -f 'reqs.c' || echo '$(srcdir)/'`reqs.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-reqs.o `test -f 'reqs.c' || echo '$(srcdir)/'`reqs.c
 
 tinyproxy-reqs.obj: reqs.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-reqs.obj -MD -MP -MF $(DEPDIR)/tinyproxy-reqs.Tpo -c -o tinyproxy-reqs.obj `if test -f 'reqs.c'; then $(CYGPATH_W) 'reqs.c'; else $(CYGPATH_W) '$(srcdir)/reqs.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-reqs.Tpo $(DEPDIR)/tinyproxy-reqs.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='reqs.c' object='tinyproxy-reqs.obj' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-reqs.obj -MD -MP -MF $(DEPDIR)/tinyproxy-reqs.Tpo -c -o tinyproxy-reqs.obj `if test -f 'reqs.c'; then $(CYGPATH_W) 'reqs.c'; else $(CYGPATH_W) '$(srcdir)/reqs.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-reqs.Tpo $(DEPDIR)/tinyproxy-reqs.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='reqs.c' object='tinyproxy-reqs.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-reqs.obj `if test -f 'reqs.c'; then $(CYGPATH_W) 'reqs.c'; else $(CYGPATH_W) '$(srcdir)/reqs.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-reqs.obj `if test -f 'reqs.c'; then $(CYGPATH_W) 'reqs.c'; else $(CYGPATH_W) '$(srcdir)/reqs.c'; fi`
 
 tinyproxy-sock.o: sock.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-sock.o -MD -MP -MF $(DEPDIR)/tinyproxy-sock.Tpo -c -o tinyproxy-sock.o `test -f 'sock.c' || echo '$(srcdir)/'`sock.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-sock.Tpo $(DEPDIR)/tinyproxy-sock.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='sock.c' object='tinyproxy-sock.o' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-sock.o -MD -MP -MF $(DEPDIR)/tinyproxy-sock.Tpo -c -o tinyproxy-sock.o `test -f 'sock.c' || echo '$(srcdir)/'`sock.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-sock.Tpo $(DEPDIR)/tinyproxy-sock.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='sock.c' object='tinyproxy-sock.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-sock.o `test -f 'sock.c' || echo '$(srcdir)/'`sock.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-sock.o `test -f 'sock.c' || echo '$(srcdir)/'`sock.c
 
 tinyproxy-sock.obj: sock.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-sock.obj -MD -MP -MF $(DEPDIR)/tinyproxy-sock.Tpo -c -o tinyproxy-sock.obj `if test -f 'sock.c'; then $(CYGPATH_W) 'sock.c'; else $(CYGPATH_W) '$(srcdir)/sock.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-sock.Tpo $(DEPDIR)/tinyproxy-sock.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='sock.c' object='tinyproxy-sock.obj' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-sock.obj -MD -MP -MF $(DEPDIR)/tinyproxy-sock.Tpo -c -o tinyproxy-sock.obj `if test -f 'sock.c'; then $(CYGPATH_W) 'sock.c'; else $(CYGPATH_W) '$(srcdir)/sock.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-sock.Tpo $(DEPDIR)/tinyproxy-sock.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='sock.c' object='tinyproxy-sock.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-sock.obj `if test -f 'sock.c'; then $(CYGPATH_W) 'sock.c'; else $(CYGPATH_W) '$(srcdir)/sock.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-sock.obj `if test -f 'sock.c'; then $(CYGPATH_W) 'sock.c'; else $(CYGPATH_W) '$(srcdir)/sock.c'; fi`
 
 tinyproxy-stats.o: stats.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-stats.o -MD -MP -MF $(DEPDIR)/tinyproxy-stats.Tpo -c -o tinyproxy-stats.o `test -f 'stats.c' || echo '$(srcdir)/'`stats.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-stats.Tpo $(DEPDIR)/tinyproxy-stats.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='stats.c' object='tinyproxy-stats.o' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-stats.o -MD -MP -MF $(DEPDIR)/tinyproxy-stats.Tpo -c -o tinyproxy-stats.o `test -f 'stats.c' || echo '$(srcdir)/'`stats.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-stats.Tpo $(DEPDIR)/tinyproxy-stats.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='stats.c' object='tinyproxy-stats.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-stats.o `test -f 'stats.c' || echo '$(srcdir)/'`stats.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-stats.o `test -f 'stats.c' || echo '$(srcdir)/'`stats.c
 
 tinyproxy-stats.obj: stats.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-stats.obj -MD -MP -MF $(DEPDIR)/tinyproxy-stats.Tpo -c -o tinyproxy-stats.obj `if test -f 'stats.c'; then $(CYGPATH_W) 'stats.c'; else $(CYGPATH_W) '$(srcdir)/stats.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-stats.Tpo $(DEPDIR)/tinyproxy-stats.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='stats.c' object='tinyproxy-stats.obj' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-stats.obj -MD -MP -MF $(DEPDIR)/tinyproxy-stats.Tpo -c -o tinyproxy-stats.obj `if test -f 'stats.c'; then $(CYGPATH_W) 'stats.c'; else $(CYGPATH_W) '$(srcdir)/stats.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-stats.Tpo $(DEPDIR)/tinyproxy-stats.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='stats.c' object='tinyproxy-stats.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-stats.obj `if test -f 'stats.c'; then $(CYGPATH_W) 'stats.c'; else $(CYGPATH_W) '$(srcdir)/stats.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-stats.obj `if test -f 'stats.c'; then $(CYGPATH_W) 'stats.c'; else $(CYGPATH_W) '$(srcdir)/stats.c'; fi`
 
 tinyproxy-text.o: text.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-text.o -MD -MP -MF $(DEPDIR)/tinyproxy-text.Tpo -c -o tinyproxy-text.o `test -f 'text.c' || echo '$(srcdir)/'`text.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-text.Tpo $(DEPDIR)/tinyproxy-text.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='text.c' object='tinyproxy-text.o' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-text.o -MD -MP -MF $(DEPDIR)/tinyproxy-text.Tpo -c -o tinyproxy-text.o `test -f 'text.c' || echo '$(srcdir)/'`text.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-text.Tpo $(DEPDIR)/tinyproxy-text.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='text.c' object='tinyproxy-text.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-text.o `test -f 'text.c' || echo '$(srcdir)/'`text.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-text.o `test -f 'text.c' || echo '$(srcdir)/'`text.c
 
 tinyproxy-text.obj: text.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-text.obj -MD -MP -MF $(DEPDIR)/tinyproxy-text.Tpo -c -o tinyproxy-text.obj `if test -f 'text.c'; then $(CYGPATH_W) 'text.c'; else $(CYGPATH_W) '$(srcdir)/text.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-text.Tpo $(DEPDIR)/tinyproxy-text.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='text.c' object='tinyproxy-text.obj' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-text.obj -MD -MP -MF $(DEPDIR)/tinyproxy-text.Tpo -c -o tinyproxy-text.obj `if test -f 'text.c'; then $(CYGPATH_W) 'text.c'; else $(CYGPATH_W) '$(srcdir)/text.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-text.Tpo $(DEPDIR)/tinyproxy-text.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='text.c' object='tinyproxy-text.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-text.obj `if test -f 'text.c'; then $(CYGPATH_W) 'text.c'; else $(CYGPATH_W) '$(srcdir)/text.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-text.obj `if test -f 'text.c'; then $(CYGPATH_W) 'text.c'; else $(CYGPATH_W) '$(srcdir)/text.c'; fi`
 
 tinyproxy-main.o: main.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-main.o -MD -MP -MF $(DEPDIR)/tinyproxy-main.Tpo -c -o tinyproxy-main.o `test -f 'main.c' || echo '$(srcdir)/'`main.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-main.Tpo $(DEPDIR)/tinyproxy-main.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='main.c' object='tinyproxy-main.o' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-main.o -MD -MP -MF $(DEPDIR)/tinyproxy-main.Tpo -c -o tinyproxy-main.o `test -f 'main.c' || echo '$(srcdir)/'`main.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-main.Tpo $(DEPDIR)/tinyproxy-main.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='main.c' object='tinyproxy-main.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-main.o `test -f 'main.c' || echo '$(srcdir)/'`main.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-main.o `test -f 'main.c' || echo '$(srcdir)/'`main.c
 
 tinyproxy-main.obj: main.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-main.obj -MD -MP -MF $(DEPDIR)/tinyproxy-main.Tpo -c -o tinyproxy-main.obj `if test -f 'main.c'; then $(CYGPATH_W) 'main.c'; else $(CYGPATH_W) '$(srcdir)/main.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-main.Tpo $(DEPDIR)/tinyproxy-main.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='main.c' object='tinyproxy-main.obj' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-main.obj -MD -MP -MF $(DEPDIR)/tinyproxy-main.Tpo -c -o tinyproxy-main.obj `if test -f 'main.c'; then $(CYGPATH_W) 'main.c'; else $(CYGPATH_W) '$(srcdir)/main.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-main.Tpo $(DEPDIR)/tinyproxy-main.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='main.c' object='tinyproxy-main.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-main.obj `if test -f 'main.c'; then $(CYGPATH_W) 'main.c'; else $(CYGPATH_W) '$(srcdir)/main.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-main.obj `if test -f 'main.c'; then $(CYGPATH_W) 'main.c'; else $(CYGPATH_W) '$(srcdir)/main.c'; fi`
 
 tinyproxy-utils.o: utils.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-utils.o -MD -MP -MF $(DEPDIR)/tinyproxy-utils.Tpo -c -o tinyproxy-utils.o `test -f 'utils.c' || echo '$(srcdir)/'`utils.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-utils.Tpo $(DEPDIR)/tinyproxy-utils.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='utils.c' object='tinyproxy-utils.o' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-utils.o -MD -MP -MF $(DEPDIR)/tinyproxy-utils.Tpo -c -o tinyproxy-utils.o `test -f 'utils.c' || echo '$(srcdir)/'`utils.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-utils.Tpo $(DEPDIR)/tinyproxy-utils.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='utils.c' object='tinyproxy-utils.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-utils.o `test -f 'utils.c' || echo '$(srcdir)/'`utils.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-utils.o `test -f 'utils.c' || echo '$(srcdir)/'`utils.c
 
 tinyproxy-utils.obj: utils.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-utils.obj -MD -MP -MF $(DEPDIR)/tinyproxy-utils.Tpo -c -o tinyproxy-utils.obj `if test -f 'utils.c'; then $(CYGPATH_W) 'utils.c'; else $(CYGPATH_W) '$(srcdir)/utils.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-utils.Tpo $(DEPDIR)/tinyproxy-utils.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='utils.c' object='tinyproxy-utils.obj' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-utils.obj -MD -MP -MF $(DEPDIR)/tinyproxy-utils.Tpo -c -o tinyproxy-utils.obj `if test -f 'utils.c'; then $(CYGPATH_W) 'utils.c'; else $(CYGPATH_W) '$(srcdir)/utils.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-utils.Tpo $(DEPDIR)/tinyproxy-utils.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='utils.c' object='tinyproxy-utils.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-utils.obj `if test -f 'utils.c'; then $(CYGPATH_W) 'utils.c'; else $(CYGPATH_W) '$(srcdir)/utils.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-utils.obj `if test -f 'utils.c'; then $(CYGPATH_W) 'utils.c'; else $(CYGPATH_W) '$(srcdir)/utils.c'; fi`
 
 tinyproxy-vector.o: vector.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-vector.o -MD -MP -MF $(DEPDIR)/tinyproxy-vector.Tpo -c -o tinyproxy-vector.o `test -f 'vector.c' || echo '$(srcdir)/'`vector.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-vector.Tpo $(DEPDIR)/tinyproxy-vector.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='vector.c' object='tinyproxy-vector.o' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-vector.o -MD -MP -MF $(DEPDIR)/tinyproxy-vector.Tpo -c -o tinyproxy-vector.o `test -f 'vector.c' || echo '$(srcdir)/'`vector.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-vector.Tpo $(DEPDIR)/tinyproxy-vector.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='vector.c' object='tinyproxy-vector.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-vector.o `test -f 'vector.c' || echo '$(srcdir)/'`vector.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-vector.o `test -f 'vector.c' || echo '$(srcdir)/'`vector.c
 
 tinyproxy-vector.obj: vector.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-vector.obj -MD -MP -MF $(DEPDIR)/tinyproxy-vector.Tpo -c -o tinyproxy-vector.obj `if test -f 'vector.c'; then $(CYGPATH_W) 'vector.c'; else $(CYGPATH_W) '$(srcdir)/vector.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-vector.Tpo $(DEPDIR)/tinyproxy-vector.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='vector.c' object='tinyproxy-vector.obj' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-vector.obj -MD -MP -MF $(DEPDIR)/tinyproxy-vector.Tpo -c -o tinyproxy-vector.obj `if test -f 'vector.c'; then $(CYGPATH_W) 'vector.c'; else $(CYGPATH_W) '$(srcdir)/vector.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-vector.Tpo $(DEPDIR)/tinyproxy-vector.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='vector.c' object='tinyproxy-vector.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-vector.obj `if test -f 'vector.c'; then $(CYGPATH_W) 'vector.c'; else $(CYGPATH_W) '$(srcdir)/vector.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-vector.obj `if test -f 'vector.c'; then $(CYGPATH_W) 'vector.c'; else $(CYGPATH_W) '$(srcdir)/vector.c'; fi`
 
 tinyproxy-upstream.o: upstream.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-upstream.o -MD -MP -MF $(DEPDIR)/tinyproxy-upstream.Tpo -c -o tinyproxy-upstream.o `test -f 'upstream.c' || echo '$(srcdir)/'`upstream.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-upstream.Tpo $(DEPDIR)/tinyproxy-upstream.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='upstream.c' object='tinyproxy-upstream.o' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-upstream.o -MD -MP -MF $(DEPDIR)/tinyproxy-upstream.Tpo -c -o tinyproxy-upstream.o `test -f 'upstream.c' || echo '$(srcdir)/'`upstream.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-upstream.Tpo $(DEPDIR)/tinyproxy-upstream.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='upstream.c' object='tinyproxy-upstream.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-upstream.o `test -f 'upstream.c' || echo '$(srcdir)/'`upstream.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-upstream.o `test -f 'upstream.c' || echo '$(srcdir)/'`upstream.c
 
 tinyproxy-upstream.obj: upstream.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-upstream.obj -MD -MP -MF $(DEPDIR)/tinyproxy-upstream.Tpo -c -o tinyproxy-upstream.obj `if test -f 'upstream.c'; then $(CYGPATH_W) 'upstream.c'; else $(CYGPATH_W) '$(srcdir)/upstream.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-upstream.Tpo $(DEPDIR)/tinyproxy-upstream.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='upstream.c' object='tinyproxy-upstream.obj' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-upstream.obj -MD -MP -MF $(DEPDIR)/tinyproxy-upstream.Tpo -c -o tinyproxy-upstream.obj `if test -f 'upstream.c'; then $(CYGPATH_W) 'upstream.c'; else $(CYGPATH_W) '$(srcdir)/upstream.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-upstream.Tpo $(DEPDIR)/tinyproxy-upstream.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='upstream.c' object='tinyproxy-upstream.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-upstream.obj `if test -f 'upstream.c'; then $(CYGPATH_W) 'upstream.c'; else $(CYGPATH_W) '$(srcdir)/upstream.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-upstream.obj `if test -f 'upstream.c'; then $(CYGPATH_W) 'upstream.c'; else $(CYGPATH_W) '$(srcdir)/upstream.c'; fi`
 
 tinyproxy-connect-ports.o: connect-ports.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-connect-ports.o -MD -MP -MF $(DEPDIR)/tinyproxy-connect-ports.Tpo -c -o tinyproxy-connect-ports.o `test -f 'connect-ports.c' || echo '$(srcdir)/'`connect-ports.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-connect-ports.Tpo $(DEPDIR)/tinyproxy-connect-ports.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='connect-ports.c' object='tinyproxy-connect-ports.o' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-connect-ports.o -MD -MP -MF $(DEPDIR)/tinyproxy-connect-ports.Tpo -c -o tinyproxy-connect-ports.o `test -f 'connect-ports.c' || echo '$(srcdir)/'`connect-ports.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-connect-ports.Tpo $(DEPDIR)/tinyproxy-connect-ports.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='connect-ports.c' object='tinyproxy-connect-ports.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-connect-ports.o `test -f 'connect-ports.c' || echo '$(srcdir)/'`connect-ports.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-connect-ports.o `test -f 'connect-ports.c' || echo '$(srcdir)/'`connect-ports.c
 
 tinyproxy-connect-ports.obj: connect-ports.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-connect-ports.obj -MD -MP -MF $(DEPDIR)/tinyproxy-connect-ports.Tpo -c -o tinyproxy-connect-ports.obj `if test -f 'connect-ports.c'; then $(CYGPATH_W) 'connect-ports.c'; else $(CYGPATH_W) '$(srcdir)/connect-ports.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-connect-ports.Tpo $(DEPDIR)/tinyproxy-connect-ports.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='connect-ports.c' object='tinyproxy-connect-ports.obj' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-connect-ports.obj -MD -MP -MF $(DEPDIR)/tinyproxy-connect-ports.Tpo -c -o tinyproxy-connect-ports.obj `if test -f 'connect-ports.c'; then $(CYGPATH_W) 'connect-ports.c'; else $(CYGPATH_W) '$(srcdir)/connect-ports.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-connect-ports.Tpo $(DEPDIR)/tinyproxy-connect-ports.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='connect-ports.c' object='tinyproxy-connect-ports.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-connect-ports.obj `if test -f 'connect-ports.c'; then $(CYGPATH_W) 'connect-ports.c'; else $(CYGPATH_W) '$(srcdir)/connect-ports.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-connect-ports.obj `if test -f 'connect-ports.c'; then $(CYGPATH_W) 'connect-ports.c'; else $(CYGPATH_W) '$(srcdir)/connect-ports.c'; fi`
 
 tinyproxy-filter.o: filter.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-filter.o -MD -MP -MF $(DEPDIR)/tinyproxy-filter.Tpo -c -o tinyproxy-filter.o `test -f 'filter.c' || echo '$(srcdir)/'`filter.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-filter.Tpo $(DEPDIR)/tinyproxy-filter.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='filter.c' object='tinyproxy-filter.o' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-filter.o -MD -MP -MF $(DEPDIR)/tinyproxy-filter.Tpo -c -o tinyproxy-filter.o `test -f 'filter.c' || echo '$(srcdir)/'`filter.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-filter.Tpo $(DEPDIR)/tinyproxy-filter.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='filter.c' object='tinyproxy-filter.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-filter.o `test -f 'filter.c' || echo '$(srcdir)/'`filter.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-filter.o `test -f 'filter.c' || echo '$(srcdir)/'`filter.c
 
 tinyproxy-filter.obj: filter.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-filter.obj -MD -MP -MF $(DEPDIR)/tinyproxy-filter.Tpo -c -o tinyproxy-filter.obj `if test -f 'filter.c'; then $(CYGPATH_W) 'filter.c'; else $(CYGPATH_W) '$(srcdir)/filter.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-filter.Tpo $(DEPDIR)/tinyproxy-filter.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='filter.c' object='tinyproxy-filter.obj' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-filter.obj -MD -MP -MF $(DEPDIR)/tinyproxy-filter.Tpo -c -o tinyproxy-filter.obj `if test -f 'filter.c'; then $(CYGPATH_W) 'filter.c'; else $(CYGPATH_W) '$(srcdir)/filter.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-filter.Tpo $(DEPDIR)/tinyproxy-filter.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='filter.c' object='tinyproxy-filter.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-filter.obj `if test -f 'filter.c'; then $(CYGPATH_W) 'filter.c'; else $(CYGPATH_W) '$(srcdir)/filter.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-filter.obj `if test -f 'filter.c'; then $(CYGPATH_W) 'filter.c'; else $(CYGPATH_W) '$(srcdir)/filter.c'; fi`
 
 tinyproxy-remotefilter.o: remotefilter.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-remotefilter.o -MD -MP -MF $(DEPDIR)/tinyproxy-remotefilter.Tpo -c -o tinyproxy-remotefilter.o `test -f 'remotefilter.c' || echo '$(srcdir)/'`remotefilter.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-remotefilter.Tpo $(DEPDIR)/tinyproxy-remotefilter.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='remotefilter.c' object='tinyproxy-remotefilter.o' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-remotefilter.o -MD -MP -MF $(DEPDIR)/tinyproxy-remotefilter.Tpo -c -o tinyproxy-remotefilter.o `test -f 'remotefilter.c' || echo '$(srcdir)/'`remotefilter.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-remotefilter.Tpo $(DEPDIR)/tinyproxy-remotefilter.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='remotefilter.c' object='tinyproxy-remotefilter.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-remotefilter.o `test -f 'remotefilter.c' || echo '$(srcdir)/'`remotefilter.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-remotefilter.o `test -f 'remotefilter.c' || echo '$(srcdir)/'`remotefilter.c
 
 tinyproxy-remotefilter.obj: remotefilter.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-remotefilter.obj -MD -MP -MF $(DEPDIR)/tinyproxy-remotefilter.Tpo -c -o tinyproxy-remotefilter.obj `if test -f 'remotefilter.c'; then $(CYGPATH_W) 'remotefilter.c'; else $(CYGPATH_W) '$(srcdir)/remotefilter.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-remotefilter.Tpo $(DEPDIR)/tinyproxy-remotefilter.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='remotefilter.c' object='tinyproxy-remotefilter.obj' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-remotefilter.obj -MD -MP -MF $(DEPDIR)/tinyproxy-remotefilter.Tpo -c -o tinyproxy-remotefilter.obj `if test -f 'remotefilter.c'; then $(CYGPATH_W) 'remotefilter.c'; else $(CYGPATH_W) '$(srcdir)/remotefilter.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-remotefilter.Tpo $(DEPDIR)/tinyproxy-remotefilter.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='remotefilter.c' object='tinyproxy-remotefilter.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-remotefilter.obj `if test -f 'remotefilter.c'; then $(CYGPATH_W) 'remotefilter.c'; else $(CYGPATH_W) '$(srcdir)/remotefilter.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-remotefilter.obj `if test -f 'remotefilter.c'; then $(CYGPATH_W) 'remotefilter.c'; else $(CYGPATH_W) '$(srcdir)/remotefilter.c'; fi`
 
 tinyproxy-reverse-proxy.o: reverse-proxy.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-reverse-proxy.o -MD -MP -MF $(DEPDIR)/tinyproxy-reverse-proxy.Tpo -c -o tinyproxy-reverse-proxy.o `test -f 'reverse-proxy.c' || echo '$(srcdir)/'`reverse-proxy.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-reverse-proxy.Tpo $(DEPDIR)/tinyproxy-reverse-proxy.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='reverse-proxy.c' object='tinyproxy-reverse-proxy.o' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-reverse-proxy.o -MD -MP -MF $(DEPDIR)/tinyproxy-reverse-proxy.Tpo -c -o tinyproxy-reverse-proxy.o `test -f 'reverse-proxy.c' || echo '$(srcdir)/'`reverse-proxy.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-reverse-proxy.Tpo $(DEPDIR)/tinyproxy-reverse-proxy.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='reverse-proxy.c' object='tinyproxy-reverse-proxy.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-reverse-proxy.o `test -f 'reverse-proxy.c' || echo '$(srcdir)/'`reverse-proxy.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-reverse-proxy.o `test -f 'reverse-proxy.c' || echo '$(srcdir)/'`reverse-proxy.c
 
 tinyproxy-reverse-proxy.obj: reverse-proxy.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-reverse-proxy.obj -MD -MP -MF $(DEPDIR)/tinyproxy-reverse-proxy.Tpo -c -o tinyproxy-reverse-proxy.obj `if test -f 'reverse-proxy.c'; then $(CYGPATH_W) 'reverse-proxy.c'; else $(CYGPATH_W) '$(srcdir)/reverse-proxy.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-reverse-proxy.Tpo $(DEPDIR)/tinyproxy-reverse-proxy.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='reverse-proxy.c' object='tinyproxy-reverse-proxy.obj' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-reverse-proxy.obj -MD -MP -MF $(DEPDIR)/tinyproxy-reverse-proxy.Tpo -c -o tinyproxy-reverse-proxy.obj `if test -f 'reverse-proxy.c'; then $(CYGPATH_W) 'reverse-proxy.c'; else $(CYGPATH_W) '$(srcdir)/reverse-proxy.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-reverse-proxy.Tpo $(DEPDIR)/tinyproxy-reverse-proxy.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='reverse-proxy.c' object='tinyproxy-reverse-proxy.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-reverse-proxy.obj `if test -f 'reverse-proxy.c'; then $(CYGPATH_W) 'reverse-proxy.c'; else $(CYGPATH_W) '$(srcdir)/reverse-proxy.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-reverse-proxy.obj `if test -f 'reverse-proxy.c'; then $(CYGPATH_W) 'reverse-proxy.c'; else $(CYGPATH_W) '$(srcdir)/reverse-proxy.c'; fi`
 
 tinyproxy-mux.o: mux.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-mux.o -MD -MP -MF $(DEPDIR)/tinyproxy-mux.Tpo -c -o tinyproxy-mux.o `test -f 'mux.c' || echo '$(srcdir)/'`mux.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-mux.Tpo $(DEPDIR)/tinyproxy-mux.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='mux.c' object='tinyproxy-mux.o' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-mux.o -MD -MP -MF $(DEPDIR)/tinyproxy-mux.Tpo -c -o tinyproxy-mux.o `test -f 'mux.c' || echo '$(srcdir)/'`mux.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-mux.Tpo $(DEPDIR)/tinyproxy-mux.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mux.c' object='tinyproxy-mux.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-mux.o `test -f 'mux.c' || echo '$(srcdir)/'`mux.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-mux.o `test -f 'mux.c' || echo '$(srcdir)/'`mux.c
 
 tinyproxy-mux.obj: mux.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-mux.obj -MD -MP -MF $(DEPDIR)/tinyproxy-mux.Tpo -c -o tinyproxy-mux.obj `if test -f 'mux.c'; then $(CYGPATH_W) 'mux.c'; else $(CYGPATH_W) '$(srcdir)/mux.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-mux.Tpo $(DEPDIR)/tinyproxy-mux.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='mux.c' object='tinyproxy-mux.obj' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-mux.obj -MD -MP -MF $(DEPDIR)/tinyproxy-mux.Tpo -c -o tinyproxy-mux.obj `if test -f 'mux.c'; then $(CYGPATH_W) 'mux.c'; else $(CYGPATH_W) '$(srcdir)/mux.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-mux.Tpo $(DEPDIR)/tinyproxy-mux.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mux.c' object='tinyproxy-mux.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-mux.obj `if test -f 'mux.c'; then $(CYGPATH_W) 'mux.c'; else $(CYGPATH_W) '$(srcdir)/mux.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-mux.obj `if test -f 'mux.c'; then $(CYGPATH_W) 'mux.c'; else $(CYGPATH_W) '$(srcdir)/mux.c'; fi`
 
 tinyproxy-transparent-proxy.o: transparent-proxy.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-transparent-proxy.o -MD -MP -MF $(DEPDIR)/tinyproxy-transparent-proxy.Tpo -c -o tinyproxy-transparent-proxy.o `test -f 'transparent-proxy.c' || echo '$(srcdir)/'`transparent-proxy.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-transparent-proxy.Tpo $(DEPDIR)/tinyproxy-transparent-proxy.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='transparent-proxy.c' object='tinyproxy-transparent-proxy.o' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-transparent-proxy.o -MD -MP -MF $(DEPDIR)/tinyproxy-transparent-proxy.Tpo -c -o tinyproxy-transparent-proxy.o `test -f 'transparent-proxy.c' || echo '$(srcdir)/'`transparent-proxy.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-transparent-proxy.Tpo $(DEPDIR)/tinyproxy-transparent-proxy.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='transparent-proxy.c' object='tinyproxy-transparent-proxy.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-transparent-proxy.o `test -f 'transparent-proxy.c' || echo '$(srcdir)/'`transparent-proxy.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-transparent-proxy.o `test -f 'transparent-proxy.c' || echo '$(srcdir)/'`transparent-proxy.c
 
 tinyproxy-transparent-proxy.obj: transparent-proxy.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-transparent-proxy.obj -MD -MP -MF $(DEPDIR)/tinyproxy-transparent-proxy.Tpo -c -o tinyproxy-transparent-proxy.obj `if test -f 'transparent-proxy.c'; then $(CYGPATH_W) 'transparent-proxy.c'; else $(CYGPATH_W) '$(srcdir)/transparent-proxy.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/tinyproxy-transparent-proxy.Tpo $(DEPDIR)/tinyproxy-transparent-proxy.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='transparent-proxy.c' object='tinyproxy-transparent-proxy.obj' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tinyproxy-transparent-proxy.obj -MD -MP -MF $(DEPDIR)/tinyproxy-transparent-proxy.Tpo -c -o tinyproxy-transparent-proxy.obj `if test -f 'transparent-proxy.c'; then $(CYGPATH_W) 'transparent-proxy.c'; else $(CYGPATH_W) '$(srcdir)/transparent-proxy.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tinyproxy-transparent-proxy.Tpo $(DEPDIR)/tinyproxy-transparent-proxy.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='transparent-proxy.c' object='tinyproxy-transparent-proxy.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-transparent-proxy.obj `if test -f 'transparent-proxy.c'; then $(CYGPATH_W) 'transparent-proxy.c'; else $(CYGPATH_W) '$(srcdir)/transparent-proxy.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(tinyproxy_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tinyproxy-transparent-proxy.obj `if test -f 'transparent-proxy.c'; then $(CYGPATH_W) 'transparent-proxy.c'; else $(CYGPATH_W) '$(srcdir)/transparent-proxy.c'; fi`
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \

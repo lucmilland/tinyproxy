@@ -27,7 +27,7 @@ AM_INIT_AUTOMAKE([foreign dist-bzip2 dist-xz])
 AM_CONFIG_HEADER(config.h)
 AC_CONFIG_MACRO_DIR([m4macros])
 
-m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
+#m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
 TINYPROXY_MAJOR_VERSION=tinyproxy_major_version
 TINYPROXY_MINOR_VERSION=tinyproxy_minor_version
@@ -138,6 +138,16 @@ TP_ARG_ENABLE(remotefilter,
               [Enable remote squidGuard filtering (default is NO)],
               no)
 
+AH_TEMPLATE([TINYPROXY_ZEROMQ],
+	[ZeroMQ installation directory.])
+AC_ARG_WITH(zeromq,
+            [AC_HELP_STRING([--with-zeromq=prefix], [ZeroMQ installation directory])],
+            [AC_DEFINE_UNQUOTED(TINYPROXY_ZEROMQ, "$withval")
+	     TINYPROXY_ZEROMQ="$withval"],
+	    [AC_DEFINE_UNQUOTED(TINYPROXY_ZEROMQ, "/usr/lib")
+	     TINYPROXY_ZEROMQ="/usr"])
+LDFLAGS="-L$TINYPROXY_ZEROMQ/lib $LDFLAGS"
+CPPFLAGS="-I$TINYPROXY_ZEROMQ/include $CPPFLAGS"
 if test x"$remotefilter_enabled" = x"yes"; then
     ADDITIONAL_OBJECTS="$ADDITIONAL_OBJECTS remotefilter.o libmux.a"
     AC_DEFINE(REMOTE_FILTER_ENABLE)

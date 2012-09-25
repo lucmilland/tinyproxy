@@ -21,15 +21,14 @@
 struct mux_context {
   int server;        /* UDP socket to guardserv */
   void *zmq_context; /* ZMQ context for the following : */
-  void *clients;     /* ZMQ socket to tinyproxys (they are clients) */
 
   hashmap_t pendings;/* pending calls hashmap */
   int next_pending_id; /* next request id */
   pthread_mutex_t pendings_mutex;
 
-  pthread_t listener; /* thread listening for responses from guardserv */
-  pthread_t worker;   /* thread listening for queries from tinyproxy */
-
+  pthread_t listener_thread;/* thread listening for responses from guardserv */
+  pthread_t worker_thread;  /* thread listening for queries from tinyproxy */
+  void *notifier;         /* ZMQ socket between worker and listener threads */
 };
 typedef struct mux_context *mux_context_t;
 
@@ -165,9 +164,9 @@ mux_init(char *hostname) {
   /* init zmq sockets */
   ctx->zmq_context = zmq_init(1);
 
-  /* listen requests from tinyproxy */
-  ctx->clients = zmq_socket(ctx->zmq_context, ZMQ_ROUTER);
-  zmq_bind (ctx->clients, "ipc:///tmp/http-filter");
+  /* listen notifications from listener thread */
+  ctx->notifier = zmq_socket(ctx->zmq_context, ZMQ_PAIR);
+  zmq_bind(ctx->notifier, "inproc://notify");
 
   return ctx;
 }
@@ -177,8 +176,6 @@ mux_init(char *hostname) {
  */
 static void
 mux_destroy(mux_context_t ctx) {
-  if (ctx->clients)
-    zmq_close(ctx->clients);
   if (ctx->zmq_context)
     zmq_term(ctx->zmq_context);
   free(ctx);
@@ -197,9 +194,18 @@ listener_thread(void *args) {
   char *buffer;
   char *zmq_sender;
   mux_context_t mux;  
-  zmq_msg_t id_message;
+  void *notifier;
+  int rc;
 
   mux = (mux_context_t)args;
+
+  /* connect to worker' socket */
+  notifier = zmq_socket(mux->zmq_context, ZMQ_PAIR);
+  rc = zmq_connect(notifier, "inproc://notify");
+  if (rc) {
+    log_message(LOG_ERR, "can't connect REQ : %s", strerror(-rc));
+    return NULL;
+  }    
 
   while (1) {
     /* wait for a response */
@@ -255,14 +261,11 @@ listener_thread(void *args) {
     log_message(LOG_INFO, "Request time %f ms. id = %s, sender = %s\n"
 		, delta / 1000., id, zmq_sender);
 
-    /* redistribute response to owner */
+    /* redistribute response to owner, via worker thread */
     /* send caller's ID ... */
-    zmq_msg_init_data (&id_message, (void*)zmq_sender, strlen(zmq_sender), NULL, NULL);
-    zmq_send(mux->clients, &id_message, ZMQ_SNDMORE);
-    s_sendmore(mux->clients, "");
-    /* ... then response */
-    s_send(mux->clients, buffer);
-    zmq_msg_close(&id_message);
+    s_sendmore(notifier, zmq_sender);
+    s_sendmore(notifier, "");
+    s_send(notifier, buffer);      /* ... then response */
   }
   return NULL;
 }
@@ -324,55 +327,115 @@ queue_request(mux_context_t mux, char *requester, char *request) {
 }
 
 /*
+ * Handle client request
+ */
+static int
+handle_client(mux_context_t mux, void *clients) {
+  char *ip_address, *string_address, *ident, *method, *url, *empty;
+  char *request;
+  zmq_msg_t id_message;
+
+  /* get caller's ID */
+  zmq_msg_init (&id_message);
+  if (zmq_recv (clients, &id_message, 0)) {
+    log_message(LOG_ERR, "Can't get caller's ID");
+    return -1;
+  }
+
+  empty = s_recv(clients);
+  assert (*empty == '\0');
+
+  ip_address = s_recv(clients);
+  string_address = s_recv(clients);
+  ident = s_recv(clients);
+  method = s_recv(clients);
+  url = s_recv(clients);
+
+  if (asprintf(&request, "%s %s/%s %s %s", 
+	       url, ip_address, string_address, ident, method) < 0) {
+    log_message(LOG_ERR, "failed to allocate string");
+    return -1;
+  }
+  /* fprintf(stderr, "request : %s\n", request); */
+  free(empty);
+  free(ip_address);
+  free(string_address);
+  free(ident);
+  free(method);
+  free(url);
+
+  /* queue request */
+  queue_request(mux, (char*)zmq_msg_data(&id_message), request);
+
+  zmq_msg_close (&id_message);
+  free(request);
+
+  return 0;
+}
+
+/*
+ * Handle listener response
+ */
+static int
+handle_notifier(mux_context_t mux, void *clients) {
+  zmq_msg_t message;
+  int64_t more;
+  size_t more_size = sizeof (more);
+
+  /* pass response parts to clients */
+  while (1) {
+    zmq_msg_init(&message);
+    zmq_recv(mux->notifier, &message, 0);
+    zmq_getsockopt(mux->notifier, ZMQ_RCVMORE, &more, &more_size);
+    if (!more) {
+      zmq_send(clients, &message, 0);
+      break;
+    }
+    zmq_send(clients, &message, ZMQ_SNDMORE);
+    zmq_msg_close(&message);
+  }
+  return 0;
+}
+
+/*
  * Worker thread
  */
 static void *
 worker_task(void *args) {
   mux_context_t mux;
-  char *ip_address, *string_address, *ident, *method, *url, *empty;
-  zmq_msg_t id_message;
-  char *request;
+  zmq_pollitem_t pollers[2];
+  void *clients;     /* ZMQ socket to tinyproxys (they are clients) */
 
   mux = (mux_context_t)args;
 
+  /* listen requests from tinyproxy */
+  clients = zmq_socket(mux->zmq_context, ZMQ_ROUTER);
+  zmq_bind(clients, "ipc:///tmp/http-filter");
+
+  pollers[0].socket = clients;
+  pollers[0].fd = 0;
+  pollers[0].events = ZMQ_POLLIN;
+  pollers[0].revents = 0;
+
+  pollers[1].socket = mux->notifier;
+  pollers[1].fd = 0;
+  pollers[1].events = ZMQ_POLLIN;
+  pollers[1].revents = 0;
+
   while (1) {
-
-    /* get caller's ID */
-    zmq_msg_init (&id_message);
-    if (zmq_recv (mux->clients, &id_message, 0)) {
-      log_message(LOG_ERR, "Can't get caller's ID");
-      break;
+    zmq_poll (pollers, 2, -1);
+    if (pollers[0].revents & ZMQ_POLLIN) {
+      /* a request from tinyproxy client */
+      handle_client(mux, clients);
     }
-
-    empty = s_recv(mux->clients);
-    assert (*empty == '\0');
-
-    ip_address = s_recv(mux->clients);
-    string_address = s_recv(mux->clients);
-    ident = s_recv(mux->clients);
-    method = s_recv(mux->clients);
-    url = s_recv(mux->clients);
-
-    if (asprintf(&request, "%s %s/%s %s %s", 
-		 url, ip_address, string_address, ident, method) < 0) {
-      log_message(LOG_ERR, "failed to allocate string");
-      break;
+    if (pollers[1].revents & ZMQ_POLLIN) {
+      /* a request from response listener */
+      handle_notifier(mux, clients);
     }
-    /* fprintf(stderr, "request : %s\n", request); */
-    free(empty);
-    free(ip_address);
-    free(string_address);
-    free(ident);
-    free(method);
-    free(url);
-
-    /* queue request */
-    queue_request(mux, (char*)zmq_msg_data(&id_message), request);
-
-    zmq_msg_close (&id_message);
-    free(request);
   }
 
+  zmq_close(clients);
+  zmq_close(mux->notifier);
   pthread_exit(0);
 }
 
@@ -387,8 +450,8 @@ remote_filter_mux_init(char *hostname) {
   }
   
   /* create sending and receiving threads */
-  pthread_create (&mux->listener, NULL, listener_thread, (void*)mux);
-  pthread_create (&mux->worker , NULL, worker_task, (void*)mux);
+  pthread_create (&mux->listener_thread, NULL, listener_thread, (void*)mux);
+  pthread_create (&mux->worker_thread , NULL, worker_task, (void*)mux);
 
   return mux;
 }
@@ -398,8 +461,8 @@ remote_filter_mux_kill(void *args) {
   mux_context_t mux;
 
   mux = (mux_context_t)args;
-  pthread_cancel(mux->listener);
-  pthread_cancel(mux->worker);
+  pthread_cancel(mux->listener_thread);
+  pthread_cancel(mux->worker_thread);
   mux_destroy(mux);
 }
 
