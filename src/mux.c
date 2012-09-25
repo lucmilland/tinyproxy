@@ -20,7 +20,7 @@
 
 struct mux_context {
   int server;        /* UDP socket to guardserv */
-  void *zmq_context; /* ZMQ context for the following : */
+  void *zmq_context; /* ZMQ context for the following */
 
   hashmap_t pendings;/* pending calls hashmap */
   int next_pending_id; /* next request id */
@@ -39,27 +39,6 @@ struct pending_req {
 /***************
  * zmq helpers
  ***************/
-
-/*  Receive 0MQ string from socket and convert into C string
- *  Caller must free returned string. Returns NULL if the context
- *  is being terminated.
- */
-static char *
-s_recv (void *zsocket) {
-  zmq_msg_t message;
-  int size;
-  char *string;
-
-  zmq_msg_init (&message);
-  if (zmq_recv (zsocket, &message, 0))
-    return (NULL);
-  size = zmq_msg_size (&message);
-  string = (char *)malloc (size + 1);
-  memcpy (string, zmq_msg_data (&message), size);
-  zmq_msg_close (&message);
-  string [size] = 0;
-  return (string);
-}
 
 /*
  * Convert C string to 0MQ string and send to socket
@@ -185,28 +164,86 @@ dump_pendings(mux_context_t mux) {
        !hashmap_is_end(mux->pendings, iter); 
        iter++) {
     hashmap_return_entry(mux->pendings, iter, &key, (void**)&data);
-    log_message(LOG_ERR, "%s : %p", key, (void*)data);
+    log_message(LOG_ERR, "pending %s : %p", key, (void*)data);
   }
 }
+
+#define ID_MESSAGE     0
+#define EMPTY_MESSAGE  1
+#define IP_MESSAGE     2
+#define HOST_MESSAGE   3
+#define IDENT_MESSAGE  4
+#define METHOD_MESSAGE 5
+#define URL_MESSAGE    6
 
 /*
  * Register request and send it to remote guardserv
  */
 static int
-queue_request(mux_context_t mux, char *requester, char *request) {
+queue_request(mux_context_t mux, zmq_msg_t messages[7]) {
   struct pending_req req;
+  size_t key_length;
   char key[24];
-  char *buffer;
+  char *p;
 
-  req.request = strdup(request);
+
   pthread_mutex_lock(&mux->pendings_mutex);
   gettimeofday(&req.time, NULL);
+
+  /* build request key as req_id@ID */
   req.id = mux->next_pending_id++;
-  if ( snprintf(key, sizeof(key), "%d@%s", req.id, requester) > (int)sizeof(key) ) {
+  key_length = snprintf(key, sizeof(key), "%d@", req.id );
+  if ( key_length >= sizeof(key) - zmq_msg_size(&messages[ID_MESSAGE]) ) {
     log_message(LOG_ERR, "key is too long (%s)", key);
     pthread_mutex_unlock(&mux->pendings_mutex);
     return -1;
-  }  
+  }
+  memcpy(key + key_length, zmq_msg_data(&messages[ID_MESSAGE]), 
+	 zmq_msg_size(&messages[ID_MESSAGE]));
+    
+  /* build request string of the form : */
+  /* KEY URL IP/HOST IDENT METHOD */
+  req.request = (char*)malloc(strlen(key) +
+			      zmq_msg_size(&messages[ID_MESSAGE]) +
+			      zmq_msg_size(&messages[URL_MESSAGE]) +
+			      zmq_msg_size(&messages[IP_MESSAGE]) +
+			      zmq_msg_size(&messages[HOST_MESSAGE]) +
+			      zmq_msg_size(&messages[IDENT_MESSAGE]) +
+			      zmq_msg_size(&messages[METHOD_MESSAGE]) +
+			      4 + /* 4 whitespaces */
+			      1 + /* one slash */
+			      1   /* final '\0' character */);
+  if (req.request == NULL) {
+    log_message(LOG_ERR, "failed to allocate string");
+    return -1;
+  }
+ 
+  p = req.request;
+
+  memcpy(p, key, strlen(key));
+  p += strlen(key);
+  *p++ = ' ';
+
+  memcpy(p, zmq_msg_data(&messages[URL_MESSAGE]), zmq_msg_size(&messages[URL_MESSAGE]));
+  p += zmq_msg_size(&messages[URL_MESSAGE]);
+  *p++ = ' ';
+
+  memcpy(p, zmq_msg_data(&messages[IP_MESSAGE]), zmq_msg_size(&messages[IP_MESSAGE]));
+  p += zmq_msg_size(&messages[IP_MESSAGE]);
+  *p++ = '/';
+
+  memcpy(p, zmq_msg_data(&messages[HOST_MESSAGE]), zmq_msg_size(&messages[HOST_MESSAGE]));
+  p += zmq_msg_size(&messages[HOST_MESSAGE]);
+  *p++ = ' ';
+
+  memcpy(p, zmq_msg_data(&messages[IDENT_MESSAGE]), zmq_msg_size(&messages[IDENT_MESSAGE]));
+  p += zmq_msg_size(&messages[IDENT_MESSAGE]);
+  *p++ = ' ';
+
+  memcpy(p, zmq_msg_data(&messages[METHOD_MESSAGE]), zmq_msg_size(&messages[METHOD_MESSAGE]));
+  p += zmq_msg_size(&messages[METHOD_MESSAGE]);
+  *p = '\0';
+
   if ( hashmap_insert(mux->pendings, key,
 		      (void*)&req, sizeof(struct pending_req)) < 0 ) {
     log_message(LOG_ERR, "can't insert key (%s)", key);
@@ -215,19 +252,17 @@ queue_request(mux_context_t mux, char *requester, char *request) {
   }
   pthread_mutex_unlock(&mux->pendings_mutex);
 
-  if ( asprintf(&buffer, "%s %s", key, request) < 0 ) {
-    log_message(LOG_ERR, "failed to allocate request string");
-    hashmap_remove(mux->pendings, key);
-    return -1;
-  }
+  fprintf(stderr, "request : %s\n", req.request);
 
-  if (send(mux->server, buffer, strlen(buffer), 0) < 0) {
+  /* finaly, send request */
+  if (send(mux->server, req.request, strlen(req.request), 0) < 0) {
     log_message(LOG_ERR, "error occured sending message");
+    pthread_mutex_lock(&mux->pendings_mutex);
+    free(req.request);
     hashmap_remove(mux->pendings, key);
-    free(buffer);
+    pthread_mutex_unlock(&mux->pendings_mutex);
     return -1;
   }
-  free(buffer);
   return 0;
 }
 
@@ -236,44 +271,25 @@ queue_request(mux_context_t mux, char *requester, char *request) {
  */
 static int
 handle_client(mux_context_t mux, void *clients) {
-  char *ip_address, *string_address, *ident, *method, *url, *empty;
-  char *request;
-  zmq_msg_t id_message;
+  zmq_msg_t messages[7];
+  int i;
 
-  /* get caller's ID */
-  zmq_msg_init (&id_message);
-  if (zmq_recv (clients, &id_message, 0)) {
-    log_message(LOG_ERR, "Can't get caller's ID");
-    return -1;
+
+  /* get caller messages */
+  for (i=0; i < 7; i++) {
+    zmq_msg_init (&messages[i]);
+    if (zmq_recv (clients, &messages[i], 0)) {
+      log_message(LOG_ERR, "Can't get message part");
+      return -1;
+    }
   }
-
-  empty = s_recv(clients);
-  assert (*empty == '\0');
-
-  ip_address = s_recv(clients);
-  string_address = s_recv(clients);
-  ident = s_recv(clients);
-  method = s_recv(clients);
-  url = s_recv(clients);
-
-  if (asprintf(&request, "%s %s/%s %s %s", 
-	       url, ip_address, string_address, ident, method) < 0) {
-    log_message(LOG_ERR, "failed to allocate string");
-    return -1;
-  }
-  /* fprintf(stderr, "request : %s\n", request); */
-  free(empty);
-  free(ip_address);
-  free(string_address);
-  free(ident);
-  free(method);
-  free(url);
 
   /* queue request */
-  queue_request(mux, (char*)zmq_msg_data(&id_message), request);
+  queue_request(mux, messages);
 
-  zmq_msg_close (&id_message);
-  free(request);
+  /* clear messages */
+  for (i=0; i < 7; i++)
+    zmq_msg_close(&messages[i]);
 
   return 0;
 }
@@ -282,7 +298,7 @@ handle_client(mux_context_t mux, void *clients) {
  * Handle listener response
  */
 static int
-handle_listener(mux_context_t mux, void *clients) {
+handle_response(mux_context_t mux, void *clients) {
   int ret;
   int delta;
   struct pending_req *req;
@@ -385,8 +401,8 @@ worker_task(void *args) {
       handle_client(mux, clients);
     }
     if (pollers[1].revents & ZMQ_POLLIN) {
-      /* a request from response listener */
-      handle_listener(mux, clients);
+      /* a response from guardserv */
+      handle_response(mux, clients);
     }
   }
 
