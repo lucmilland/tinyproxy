@@ -90,7 +90,7 @@ static int s_sendmore (void *sock, const char *string) {
 
 
 /*
- * Initializes connection to remote squidguard
+ * Initializes connection to mux
  */
 void remote_filter_init (void)
 {
@@ -122,7 +122,7 @@ char *remote_filter (struct request_s *request, const char *url,
 {
   char* reply;
 
-  log_message (LOG_DEBUG, "filtering: %s %s %s %d/%s\n", request->host,
+  log_message (LOG_INFO, "filtering: %s %s %s %d/%s\n", request->host,
 	       request->method, request->protocol, request->port,
 	       request->path);
 
