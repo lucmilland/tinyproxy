@@ -10,6 +10,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <arpa/inet.h>
+#include <poll.h>
 #include <zmq.h>
 
 #include "log.h"
@@ -80,7 +81,7 @@ get_server_connection(const char *hostname) {
   /* hints.ai_family = AF_UNSPEC;*/    /* Allow IPv4 or IPv6 */
   hints.ai_family = AF_INET;    /* Allow IPv4 or IPv6 */
   hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
-  hints.ai_flags = 0;
+  hints.ai_flags = AI_PASSIVE;
   hints.ai_protocol = 0;          /* Any protocol */
 
   s = getaddrinfo(hostname, "http-filter", &hints, &result);
@@ -113,7 +114,6 @@ mux_init(char *hostname) {
   ctx->next_pending_id = 17;
 
   /* init upstream socket */
-
   serv_addr = get_server_connection(hostname);
   if (!serv_addr) {
     log_message(LOG_ERR, "Can't connect to %s", hostname);
@@ -127,7 +127,7 @@ mux_init(char *hostname) {
     if (ctx->server == -1)
       continue;
 
-    if (connect(ctx->server, rp->ai_addr, rp->ai_addrlen) != -1) 
+    if (connect(ctx->server, rp->ai_addr, rp->ai_addrlen) != -1)
       break;
 
     close(ctx->server);
@@ -200,6 +200,7 @@ queue_request(mux_context_t mux, zmq_msg_t messages[7]) {
   }
   memcpy(key + key_length, zmq_msg_data(&messages[ID_MESSAGE]), 
 	 zmq_msg_size(&messages[ID_MESSAGE]));
+  *(key + key_length + zmq_msg_size(&messages[ID_MESSAGE])) = '\0';
     
   /* build request string of the form : */
   /* KEY URL IP/HOST IDENT METHOD */
@@ -252,10 +253,10 @@ queue_request(mux_context_t mux, zmq_msg_t messages[7]) {
   }
   pthread_mutex_unlock(&mux->pendings_mutex);
 
-  fprintf(stderr, "request : %s\n", req.request);
+  /* fprintf(stderr, "request : %s\n", req.request); */
 
   /* finaly, send request */
-  if (send(mux->server, req.request, strlen(req.request), 0) < 0) {
+  if ( send(mux->server, req.request, strlen(req.request), 0) < 0 ) {
     log_message(LOG_ERR, "error occured sending message");
     pthread_mutex_lock(&mux->pendings_mutex);
     free(req.request);
@@ -273,7 +274,6 @@ static int
 handle_client(mux_context_t mux, void *clients) {
   zmq_msg_t messages[7];
   int i;
-
 
   /* get caller messages */
   for (i=0; i < 7; i++) {
@@ -303,7 +303,7 @@ handle_response(mux_context_t mux, void *clients) {
   int delta;
   struct pending_req *req;
   struct timeval now;
-  char id[1500];
+  char id[250];
   char *buffer;
   char *zmq_sender;
 
@@ -345,8 +345,10 @@ handle_response(mux_context_t mux, void *clients) {
 
   /* lookup message in pendings */
   pthread_mutex_lock(&mux->pendings_mutex);
+
   if ( hashmap_entry_by_key(mux->pendings, id, (void **)&req) <= 0 ) {
     /* request is not known : maybe a duplicate answer */
+    log_message(LOG_WARNING, "unknown ID in response : [%s]", id);
     pthread_mutex_unlock(&mux->pendings_mutex);
     return 0;
   }
@@ -357,14 +359,13 @@ handle_response(mux_context_t mux, void *clients) {
   delta = now.tv_sec * 1000000 + now.tv_usec -
     req->time.tv_sec * 1000000 - req->time.tv_usec;
       
-  log_message(LOG_INFO, "Request time %f ms. id = %s, sender = %s\n"
-	      , delta / 1000., id, zmq_sender);
+  log_message(LOG_INFO, "Request time %f ms. id = [%s], sender = [%s]\n",
+	      delta / 1000., id, zmq_sender);
 
-  /* redistribute response to owner, via worker thread */
-  /* send caller's ID ... */
-  s_sendmore(clients, zmq_sender);
+  /* redistribute response to owner */
+  s_sendmore(clients, zmq_sender); /* send caller's ID ... */
   s_sendmore(clients, "");
-  s_send(clients, buffer);      /* ... then response */
+  s_send(clients, buffer);         /* ... then response */
 
   return 0;
 }
@@ -391,16 +392,18 @@ worker_task(void *args) {
 
   pollers[1].socket = NULL;
   pollers[1].fd = mux->server;
-  pollers[1].events = ZMQ_POLLIN;
+  pollers[1].events = POLLIN;
   pollers[1].revents = 0;
 
   while (1) {
-    zmq_poll (pollers, 2, -1);
+    if ( zmq_poll (pollers, 2, -1) < 0 ){
+      log_message(LOG_ERR, "error on poll : %s", strerror(errno));
+    };
     if (pollers[0].revents & ZMQ_POLLIN) {
       /* a request from tinyproxy client */
       handle_client(mux, clients);
     }
-    if (pollers[1].revents & ZMQ_POLLIN) {
+    if ( pollers[1].revents & POLLIN ) {
       /* a response from guardserv */
       handle_response(mux, clients);
     }
