@@ -21,6 +21,9 @@
 
 struct mux_context {
   int server;        /* UDP socket to guardserv */
+  struct sockaddr_in sockaddr;
+  socklen_t socklen;
+
   void *zmq_context; /* ZMQ context for the following */
 
   hashmap_t pendings;/* pending calls hashmap */
@@ -79,9 +82,9 @@ get_server_connection(const char *hostname) {
   
   memset(&hints, 0, sizeof(struct addrinfo));
   /* hints.ai_family = AF_UNSPEC;*/    /* Allow IPv4 or IPv6 */
-  hints.ai_family = AF_INET;    /* Allow IPv4 or IPv6 */
+  hints.ai_family = AF_INET;
   hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
-  hints.ai_flags = AI_PASSIVE;
+  hints.ai_flags = 0;
   hints.ai_protocol = 0;          /* Any protocol */
 
   s = getaddrinfo(hostname, "http-filter", &hints, &result);
@@ -120,6 +123,7 @@ mux_init(char *hostname) {
     return NULL;
   }
 
+# TODO: select ones of known servers 
   for (rp = serv_addr; rp != NULL; rp = rp->ai_next) {
 
     ctx->server = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
@@ -127,8 +131,9 @@ mux_init(char *hostname) {
     if (ctx->server == -1)
       continue;
 
-    if (connect(ctx->server, rp->ai_addr, rp->ai_addrlen) != -1)
-      break;
+    memcpy(&ctx->sockaddr, rp->ai_addr, rp->ai_addrlen);
+    ctx->socklen = rp->ai_addrlen;
+    break;
 
     close(ctx->server);
   }
@@ -256,7 +261,8 @@ queue_request(mux_context_t mux, zmq_msg_t messages[7]) {
   /* fprintf(stderr, "request : %s\n", req.request); */
 
   /* finaly, send request */
-  if ( send(mux->server, req.request, strlen(req.request), 0) < 0 ) {
+  if ( sendto(mux->server, req.request, strlen(req.request), 0,
+	      &mux->sockaddr, mux->socklen) < 0 ) {
     log_message(LOG_ERR, "error occured sending message");
     pthread_mutex_lock(&mux->pendings_mutex);
     free(req.request);
@@ -392,7 +398,7 @@ worker_task(void *args) {
 
   pollers[1].socket = NULL;
   pollers[1].fd = mux->server;
-  pollers[1].events = POLLIN;
+  pollers[1].events = ZMQ_POLLIN;
   pollers[1].revents = 0;
 
   while (1) {
@@ -403,7 +409,7 @@ worker_task(void *args) {
       /* a request from tinyproxy client */
       handle_client(mux, clients);
     }
-    if ( pollers[1].revents & POLLIN ) {
+    if ( pollers[1].revents & ZMQ_POLLIN ) {
       /* a response from guardserv */
       handle_response(mux, clients);
     }
