@@ -36,9 +36,13 @@ typedef struct mux_context *mux_context_t;
 
 struct pending_req {
   int id;
-  struct timeval time;
+  int seq;                  /* time this request was re-emitted */
+  struct timeval time;      /* last re-emit time */
   char *request;
 };
+
+/* pendings hashmap is cleaned every QUEUE_CLEANUP_PERIOD milliseconds */
+#define QUEUE_CLEANUP_PERIOD 100
 
 /***************
  * zmq helpers
@@ -165,12 +169,66 @@ dump_pendings(mux_context_t mux) {
   char *key;
   struct pending_req *data;
 
+  pthread_mutex_lock(&mux->pendings_mutex);
   for (iter = hashmap_first(mux->pendings);
        !hashmap_is_end(mux->pendings, iter); 
        iter++) {
     hashmap_return_entry(mux->pendings, iter, &key, (void**)&data);
     log_message(LOG_ERR, "pending %s : %p", key, (void*)data);
   }
+  pthread_mutex_unlock(&mux->pendings_mutex);
+}
+
+/*
+ * Send a request to guardserv
+ */
+static int
+send_request(mux_context_t mux, struct pending_req *req) {
+  return sendto(mux->server, req->request, strlen(req->request), 0,
+		&mux->sockaddr, mux->socklen);
+}
+
+/*
+ * clean-up pending calls, re-emitting old ones, cancelling really too old ones
+ */
+static int
+cleanup_pendings(mux_context_t mux, struct timeval *now) {
+  hashmap_iter iter;
+  char *key;
+  struct pending_req *req;
+  int timeout;
+
+  pthread_mutex_lock(&mux->pendings_mutex);
+  for (iter = hashmap_first(mux->pendings);
+       !hashmap_is_end(mux->pendings, iter); 
+       iter++) {
+    hashmap_return_entry(mux->pendings, iter, &key, (void**)&req);
+
+    if (req->seq <= 10) {
+      timeout = (1 << req->seq) * QUEUE_CLEANUP_PERIOD * 1000;
+    } else {
+      /* wait at most ~ 1000*1000*QUEUE_CLEANUP_PERIOD microseconds,
+	 that is QUEUE_CLEANUP_PERIOD seconds
+       */
+      timeout = (1 << 10) * QUEUE_CLEANUP_PERIOD * 1000;
+    }
+    if (now->tv_sec * 1000000 + now->tv_usec -
+	req->time.tv_sec * 1000000 - req->time.tv_usec > timeout) {
+      log_message(LOG_INFO, "timeout, seq=%d", req->seq);
+
+      req->seq++;
+      if (req->seq > 16) {
+	/* 6*QUEUE_CLEANUP_PERIOD seconds is enough : cancel request */
+	free(req->request);
+	hashmap_remove(mux->pendings, key);
+      } else {
+	/* re-emit */
+	send_request(mux, req);
+      }
+    }
+  }
+  pthread_mutex_unlock(&mux->pendings_mutex);
+  return 0;
 }
 
 #define ID_MESSAGE     0
@@ -185,15 +243,16 @@ dump_pendings(mux_context_t mux) {
  * Register request and send it to remote guardserv
  */
 static int
-queue_request(mux_context_t mux, zmq_msg_t messages[7]) {
+queue_request(mux_context_t mux, zmq_msg_t messages[7], struct timeval *now) {
   struct pending_req req;
   size_t key_length;
   char key[24];
   char *p;
 
-
   pthread_mutex_lock(&mux->pendings_mutex);
-  gettimeofday(&req.time, NULL);
+
+  /* save request time */
+  memcpy(&req.time, now, sizeof(struct timeval));
 
   /* build request key as req_id@ID */
   req.id = mux->next_pending_id++;
@@ -207,6 +266,9 @@ queue_request(mux_context_t mux, zmq_msg_t messages[7]) {
 	 zmq_msg_size(&messages[ID_MESSAGE]));
   *(key + key_length + zmq_msg_size(&messages[ID_MESSAGE])) = '\0';
     
+  /* init request tx counter */
+  req.seq = 0;
+
   /* build request string of the form : */
   /* KEY URL IP/HOST IDENT METHOD */
   req.request = (char*)malloc(strlen(key) +
@@ -261,8 +323,7 @@ queue_request(mux_context_t mux, zmq_msg_t messages[7]) {
   /* fprintf(stderr, "request : %s\n", req.request); */
 
   /* finaly, send request */
-  if ( sendto(mux->server, req.request, strlen(req.request), 0,
-	      &mux->sockaddr, mux->socklen) < 0 ) {
+  if (send_request(mux, &req) < 0 ) {
     log_message(LOG_ERR, "error occured sending message");
     pthread_mutex_lock(&mux->pendings_mutex);
     free(req.request);
@@ -277,7 +338,7 @@ queue_request(mux_context_t mux, zmq_msg_t messages[7]) {
  * Handle client request
  */
 static int
-handle_client(mux_context_t mux, void *clients) {
+handle_client(mux_context_t mux, void *clients, struct timeval *now) {
   zmq_msg_t messages[7];
   int i;
 
@@ -291,7 +352,7 @@ handle_client(mux_context_t mux, void *clients) {
   }
 
   /* queue request */
-  queue_request(mux, messages);
+  queue_request(mux, messages, now);
 
   /* clear messages */
   for (i=0; i < 7; i++)
@@ -304,11 +365,10 @@ handle_client(mux_context_t mux, void *clients) {
  * Handle listener response
  */
 static int
-handle_response(mux_context_t mux, void *clients) {
+handle_response(mux_context_t mux, void *clients, struct timeval *now) {
   int ret;
   int delta;
   struct pending_req *req;
-  struct timeval now;
   char id[250];
   char *buffer;
   char *zmq_sender;
@@ -327,8 +387,6 @@ handle_response(mux_context_t mux, void *clients) {
     log_message(LOG_ERR, "response is too short");
     return -1;
   }
-
-  gettimeofday(&now, NULL);
 
   /* isolate query id */
   buffer = (char*)&id;
@@ -354,7 +412,7 @@ handle_response(mux_context_t mux, void *clients) {
 
   if ( hashmap_entry_by_key(mux->pendings, id, (void **)&req) <= 0 ) {
     /* request is not known : maybe a duplicate answer */
-    log_message(LOG_WARNING, "unknown ID in response : [%s]", id);
+    log_message(LOG_INFO, "unknown ID in response : [%s]", id);
     pthread_mutex_unlock(&mux->pendings_mutex);
     return 0;
   }
@@ -362,7 +420,7 @@ handle_response(mux_context_t mux, void *clients) {
   hashmap_remove(mux->pendings, id);
   pthread_mutex_unlock(&mux->pendings_mutex);
 
-  delta = now.tv_sec * 1000000 + now.tv_usec -
+  delta = now->tv_sec * 1000000 + now->tv_usec -
     req->time.tv_sec * 1000000 - req->time.tv_usec;
       
   log_message(LOG_INFO, "Request time %f ms. id = [%s], sender = [%s]\n",
@@ -384,6 +442,8 @@ worker_task(void *args) {
   mux_context_t mux;
   zmq_pollitem_t pollers[2];
   void *clients;     /* ZMQ socket to tinyproxys (they are clients) */
+  struct timeval now;
+  int ret;
 
   mux = (mux_context_t)args;
 
@@ -402,17 +462,23 @@ worker_task(void *args) {
   pollers[1].revents = 0;
 
   while (1) {
-    if ( zmq_poll (pollers, 2, -1) < 0 ){
+    ret = zmq_poll (pollers, 2, QUEUE_CLEANUP_PERIOD);
+
+    gettimeofday(&now, NULL);
+
+    if ( ret < 0 ){
       log_message(LOG_ERR, "error on poll : %s", strerror(errno));
     };
     if (pollers[0].revents & ZMQ_POLLIN) {
       /* a request from tinyproxy client */
-      handle_client(mux, clients);
+      handle_client(mux, clients, &now);
     }
     if ( pollers[1].revents & ZMQ_POLLIN ) {
       /* a response from guardserv */
-      handle_response(mux, clients);
+      handle_response(mux, clients, &now);
     }
+    if ( ret == 0 )
+      cleanup_pendings(mux, &now);
   }
 
   zmq_close(clients);
