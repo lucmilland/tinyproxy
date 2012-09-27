@@ -123,7 +123,7 @@ mux_init(char *hostname) {
     return NULL;
   }
 
-# TODO: select ones of known servers 
+  /* TODO: select ones of known servers  */
   for (rp = serv_addr; rp != NULL; rp = rp->ai_next) {
 
     ctx->server = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
