@@ -5,6 +5,7 @@ import threading
 from time import sleep
 import signal
 import random
+import struct
 
 # number of squidguard processes                                                                                             
 WORKER_THREADS = 3
@@ -37,24 +38,44 @@ def guard_worker(context, listener, terminate):
 
         try:
             client = zsock.recv_pyobj()
-            id, request = zsock.recv().split(' ', 1)
+            _in = zsock.recv()
+            id = struct.unpack("!l", _in[0:4])[0]
+            requests = _in[4:].split('\0')
+            del requests[-1]  # delete last empty string 
         except:
             terminate.set()
+            raise
             break
 
-        #print "%s doing : %s for %s" % (guard.pid, request, id)
+        response = []
 
-        guard.stdin.write('%s\n' % request)
+        
+        '''
+        print "\ndoing for %s :" % id
+        for request in requests:
+            print "\t%s" % request
+        '''
+        for request in requests:
 
-        out = guard.stdout.readline().strip()
+            if not request:
+                continue
 
-        #sleep(random.randrange(0,3))
+            caller, url = request.split(' ', 1)
+            #print "%s doing : %s for %s@%d (through %s)" % (guard.pid, url, caller, id, client)
 
+            guard.stdin.write('%s\n' % url)
+
+            out = guard.stdout.readline().strip()
+
+            #sleep(random.randrange(0,4))
+            #print "\tsquidguard said : [%s]" % (out)
+
+            response.append('%s %s' % (caller, out.split(' ')[0]));
         # send answer to client socket
-        if out:
-            listener.sendto('%s %s\0' % (id, out.split(' ')[0]), client)
+        if response:
+            listener.sendto('%d %s\0' % (id, '\0'.join(response)), client)
         else:
-            listener.sendto('%s\0' % id, client)
+            listener.sendto('%d\0' % id, client)
 
     guard.terminate()
     zsock.close()
