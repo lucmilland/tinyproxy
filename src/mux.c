@@ -33,7 +33,7 @@ struct pending_req {
 };
 
 /* pendings hashmap is cleaned every QUEUE_CLEANUP_PERIOD milliseconds */
-#define QUEUE_CLEANUP_PERIOD 100
+#define QUEUE_CLEANUP_PERIOD 40
 
 struct mux_context {
   int server;        /* UDP socket to guardserv */
@@ -482,9 +482,6 @@ handle_response(mux_context_t mux, void *clients, struct timeval *now) {
     /* move pointer to tail */
     len -= strlen(response) + 1;
     response += strlen(response) + 1;
-    if (len > 0)
-      log_message(LOG_ERR, "iterating at [%s], len=%d", response, len);
-
   }
 
   return 0;
@@ -518,7 +515,7 @@ worker_task(void *args) {
   pollers[1].revents = 0;
 
   while (1) {
-    ret = zmq_poll (pollers, 2, QUEUE_CLEANUP_PERIOD);
+    ret = zmq_poll (pollers, 2, QUEUE_CLEANUP_PERIOD * 1000);
 
     gettimeofday(&now, NULL);
 
