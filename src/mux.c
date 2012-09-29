@@ -496,6 +496,7 @@ worker_task(void *args) {
   zmq_pollitem_t pollers[2];
   void *clients;     /* ZMQ socket to tinyproxys (they are clients) */
   struct timeval now;
+  struct timeval lastcleanup;
   int ret;
 
   mux = (mux_context_t)args;
@@ -513,6 +514,9 @@ worker_task(void *args) {
   pollers[1].fd = mux->server;
   pollers[1].events = ZMQ_POLLIN;
   pollers[1].revents = 0;
+
+  lastcleanup.tv_sec = 0;
+  lastcleanup.tv_usec = 0;
 
   while (1) {
     ret = zmq_poll (pollers, 2, QUEUE_CLEANUP_PERIOD * 1000);
@@ -534,8 +538,10 @@ worker_task(void *args) {
       handle_response(mux, clients, &now);
     }
 
-    if ( ret == 0 ) {
+    if ( (now.tv_sec - lastcleanup.tv_sec) * 1000000 + 
+	 (now.tv_usec - lastcleanup.tv_usec) > QUEUE_CLEANUP_PERIOD * 1000 ) {
       cleanup_pendings(mux, &now);
+      memcpy(&lastcleanup, &now, sizeof(struct timeval));
     }
   }
 
