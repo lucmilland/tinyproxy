@@ -43,6 +43,7 @@ struct mux_context {
   hashmap_t pendings;/* pending calls hashmap */
   pthread_t worker_thread;  /* thread listening for queries from tinyproxy */
   struct pending_req request; /* current request beeing built */
+  float mean_time; /* weighted average of previous response times */
 };
 typedef struct mux_context *mux_context_t;
 
@@ -157,6 +158,8 @@ mux_init(char *hostname) {
   /* init request queues */
   request_init(&ctx->request, 17);
 
+  ctx->mean_time = 40; /* 40ms average response time */
+
   return ctx;
 }
 
@@ -209,7 +212,7 @@ cleanup_pendings(mux_context_t mux, struct timeval *now) {
       timeout = 10 * (2 << req->seq) * 1000;
     } else {
       /* ..., 2048ms, 4096ms, ... , 65536ms */
-      timeout = (2 << req->seq) * 1000;
+      timeout = (2 << (req->seq + 4)) * 1000;
     }
 
     if (now->tv_sec * 1000000 + now->tv_usec -
@@ -217,14 +220,17 @@ cleanup_pendings(mux_context_t mux, struct timeval *now) {
       log_message(LOG_INFO, "timeout, seq=%d", req->seq);
 
       req->seq++;
-      if (req->seq >= 16) {
+      if (req->seq >= 12) {
 	/* enough is enough : cancel request */
 	free(req->buffer);
 	hashmap_remove(mux->pendings, key);
       } else {
-	/* re-emit */
-	sendto(mux->server, req->buffer, req->len, 0,
-	       &mux->sockaddr, mux->socklen);
+	/* re-emit iff timeout is more than 120% of mean_time */
+	if (timeout > mux->mean_time * 1.2) {
+	  /* re-emit */
+	  sendto(mux->server, req->buffer, req->len, 0,
+		 &mux->sockaddr, mux->socklen);
+	}
       }
     }
   }
@@ -284,7 +290,7 @@ request_flush(mux_context_t mux) {
 #define URL_MESSAGE    6
 
 /*
- * Register request and send it to remote guardserv
+ * Add request to request queue
  */
 static int
 queue_request(mux_context_t mux, zmq_msg_t messages[7], struct timeval *now) {
@@ -417,71 +423,84 @@ handle_response(mux_context_t mux, void *clients, struct timeval *now) {
   char *response;
   char *zmq_sender;
 
-  /* read for a response */
-  len = recv(mux->server, &buffer, sizeof(buffer), 0);
-  /* fprintf(stderr, "answer : %d bytes : [%s]\n", len, buffer); */
+  for ( ;; ) {
 
-  if (len < 0) {
-    log_message(LOG_ERR, "error while reading response");
-    return -1;
-  } else if (len == 0) {
-    log_message(LOG_ERR, "peer has closed connection");
-    return -1;
-  } else if (len < 3) {
-    log_message(LOG_ERR, "response is too short");
-    return -1;
-  }
+    /* read for a response */
+    len = recv(mux->server, &buffer, sizeof(buffer), MSG_DONTWAIT);
+    /* fprintf(stderr, "answer : %d bytes : [%s]\n", len, buffer); */
 
-  /* isolate query id */
-  id = (char*)&buffer;
-  response = (char*)&buffer;
-  do {
-    response++; len--;
-  } while (*response != ' ' && *response);
-  if (*response == ' ') {
-    *response++ = '\0';
-    len--;
-  }
+    if (len == -1) {
+      if (errno ==  EAGAIN) {
+	/* done reading messages */
+	break;
+      } else {
+	log_message(LOG_ERR, "error while reading response");
+	return -1;
+      }
+    } else if (len == 0) {
+      log_message(LOG_ERR, "peer has closed connection");
+      /* TODO : schedule a reconnect */
+      return -1;
+    } else if (len < 3) {
+      log_message(LOG_ERR, "response is too short");
+      return -1;
+    }
 
-  /* lookup message in pendings */
-  if ( hashmap_entry_by_key(mux->pendings, id, (void **)&req) <= 0 ) {
-    /* request is not known : maybe a duplicate answer */
-    log_message(LOG_INFO, "unknown ID in response : [%s]", id);
-    return 0;
-  }
-  /* remove message from pendings */
-  free(req->buffer);
-  hashmap_remove(mux->pendings, id);
-  
-  delta = now->tv_sec * 1000000 + now->tv_usec -
-    req->time.tv_sec * 1000000 - req->time.tv_usec;
-  log_message(LOG_INFO, "Request time %f ms. id = [%s]",
-	      delta / 1000., id);
-
-  /* split queries of the form :
-     ZMQ_SENDER RESPONSE
-  */
-  while (len > 0) {
-    zmq_sender = response;
+    /* isolate query id */
+    id = (char*)&buffer;
+    response = (char*)&buffer;
     do {
       response++; len--;
     } while (*response != ' ' && *response);
     if (*response == ' ') {
       *response++ = '\0';
-      len --;
-    } else if (*response != '\0') {
-      log_message(LOG_ERR, "invalid response ID in [%s], len=%d", zmq_sender, len);
-      return -1;
+      len--;
     }
 
-    /* redistribute response to owner */
-    s_sendmore(clients, zmq_sender);   /* send caller's ID ... */
-    s_sendmore(clients, "");
-    s_send(clients, response);         /* ... then response */
+    /* lookup message in pendings */
+    if ( hashmap_entry_by_key(mux->pendings, id, (void **)&req) <= 0 ) {
+      /* request is not known : maybe a duplicate answer */
+      log_message(LOG_INFO, "unknown ID in response : [%s]", id);
+      return 0;
+    }
+    /* remove message from pendings */
+    free(req->buffer);
+    hashmap_remove(mux->pendings, id);
+  
+    /* register request duration to mean_time*/
+    delta = now->tv_sec * 1000 + now->tv_usec / 1000 -
+      req->time.tv_sec * 1000 - req->time.tv_usec / 1000;
+    mux->mean_time = (mux->mean_time + 0.2 * delta) / 1.2;
 
-    /* move pointer to tail */
-    len -= strlen(response) + 1;
-    response += strlen(response) + 1;
+    log_message(LOG_INFO, "Request time %d ms. id = [%s]. Mean : %f ms",
+		delta, id, mux->mean_time);
+
+
+    /* split responses of the form :
+       ZMQ_SENDER RESPONSE
+    */
+    while (len > 0) {
+      zmq_sender = response;
+      do {
+	response++; len--;
+      } while (*response != ' ' && *response);
+      if (*response == ' ') {
+	*response++ = '\0';
+	len --;
+      } else if (*response != '\0') {
+	log_message(LOG_ERR, "invalid response ID in [%s], len=%d", zmq_sender, len);
+	return -1;
+      }
+
+      /* redistribute response to owner */
+      s_sendmore(clients, zmq_sender);   /* send caller's ID ... */
+      s_sendmore(clients, "");
+      s_send(clients, response);         /* ... then response */
+
+      /* move pointer to tail */
+      len -= strlen(response) + 1;
+      response += strlen(response) + 1;
+    }
   }
 
   return 0;
@@ -515,8 +534,7 @@ worker_task(void *args) {
   pollers[1].events = ZMQ_POLLIN;
   pollers[1].revents = 0;
 
-  lastcleanup.tv_sec = 0;
-  lastcleanup.tv_usec = 0;
+  gettimeofday(&lastcleanup, NULL);
 
   while (1) {
     ret = zmq_poll (pollers, 2, QUEUE_CLEANUP_PERIOD * 1000);
