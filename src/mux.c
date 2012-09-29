@@ -39,14 +39,9 @@ struct mux_context {
   int server;        /* UDP socket to guardserv */
   struct sockaddr_in sockaddr;
   socklen_t socklen;
-
   void *zmq_context; /* ZMQ context for the following */
-
   hashmap_t pendings;/* pending calls hashmap */
-  pthread_mutex_t pendings_mutex;
-
   pthread_t worker_thread;  /* thread listening for queries from tinyproxy */
-
   struct pending_req request; /* current request beeing built */
 };
 typedef struct mux_context *mux_context_t;
@@ -127,7 +122,6 @@ mux_init(char *hostname) {
   }
 
   /* initialize pendings queue */
-  pthread_mutex_init(&ctx->pendings_mutex, NULL);
   ctx->pendings = hashmap_create(32);
 
   /* init upstream socket */
@@ -182,14 +176,12 @@ dump_pendings(mux_context_t mux) {
   char *key;
   struct pending_req *data;
 
-  pthread_mutex_lock(&mux->pendings_mutex);
   for (iter = hashmap_first(mux->pendings);
        !hashmap_is_end(mux->pendings, iter); 
        iter++) {
     hashmap_return_entry(mux->pendings, iter, &key, (void**)&data);
     log_message(LOG_ERR, "pending %s : %p", key, (void*)data);
   }
-  pthread_mutex_unlock(&mux->pendings_mutex);
 }
 
 /*
@@ -202,14 +194,13 @@ cleanup_pendings(mux_context_t mux, struct timeval *now) {
   struct pending_req *req;
   int timeout;
 
-  pthread_mutex_lock(&mux->pendings_mutex);
   for (iter = hashmap_first(mux->pendings);
        !hashmap_is_end(mux->pendings, iter); 
        iter++) {
     hashmap_return_entry(mux->pendings, iter, &key, (void**)&req);
 
     if (req->seq <= 10) {
-      timeout = 6 * req->seq * 1000 * 1000;
+      timeout = 6 * (1 + req->seq) * 1000 * 1000;
     } else {
       /* wait for 30 more seconds a couple of times */
       timeout = (60 + 30 * (12 - req->seq)) * 1000 * 1000;
@@ -230,7 +221,6 @@ cleanup_pendings(mux_context_t mux, struct timeval *now) {
       }
     }
   }
-  pthread_mutex_unlock(&mux->pendings_mutex);
   return 0;
 }
 
@@ -296,8 +286,6 @@ queue_request(mux_context_t mux, zmq_msg_t messages[7], struct timeval *now) {
   char *p;
   int len;
 
-  pthread_mutex_lock(&mux->pendings_mutex);
-
   memcpy(&mux->request.time, now, sizeof(struct timeval));
 
   /* build request string of the form : */
@@ -314,14 +302,12 @@ queue_request(mux_context_t mux, zmq_msg_t messages[7], struct timeval *now) {
 
   if (len >= MAX_MTU) {
     log_message(LOG_ERR, "request too big");
-    pthread_mutex_unlock(&mux->pendings_mutex);
     return -1;
   }
 
   /* flush queue if necessary */
   if (mux->request.len + len >= MAX_MTU) {
     if (request_flush(mux) < 0) {
-      pthread_mutex_unlock(&mux->pendings_mutex);
       return -1;
     }
   }
@@ -355,8 +341,6 @@ queue_request(mux_context_t mux, zmq_msg_t messages[7], struct timeval *now) {
   /* update new buffer length and request count */
   mux->request.len += len;
   mux->request.count ++;
-
-  pthread_mutex_unlock(&mux->pendings_mutex);
 
   return 0;
 }
@@ -451,17 +435,14 @@ handle_response(mux_context_t mux, void *clients, struct timeval *now) {
   }
 
   /* lookup message in pendings */
-  pthread_mutex_lock(&mux->pendings_mutex);
   if ( hashmap_entry_by_key(mux->pendings, id, (void **)&req) <= 0 ) {
     /* request is not known : maybe a duplicate answer */
     log_message(LOG_INFO, "unknown ID in response : [%s]", id);
-    pthread_mutex_unlock(&mux->pendings_mutex);
     return 0;
   }
   /* remove message from pendings */
   free(req->buffer);
   hashmap_remove(mux->pendings, id);
-  pthread_mutex_unlock(&mux->pendings_mutex);
   
   delta = now->tv_sec * 1000000 + now->tv_usec -
     req->time.tv_sec * 1000000 - req->time.tv_usec;
@@ -545,8 +526,8 @@ worker_task(void *args) {
       /* no signal, time to clean-up */
       if ((now.tv_usec >> 4) % 4 == 0)
 	cleanup_pendings(mux, &now);
-      request_flush(mux);
     }
+    request_flush(mux);
 
   }
 
