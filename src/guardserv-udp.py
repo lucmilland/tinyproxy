@@ -49,7 +49,6 @@ def guard_worker(context, listener, terminate):
 
         response = []
 
-        
         '''
         print "\ndoing for %s :" % id
         for request in requests:
@@ -65,12 +64,16 @@ def guard_worker(context, listener, terminate):
 
             guard.stdin.write('%s\n' % url)
 
-            out = guard.stdout.readline().strip()
+            out = guard.stdout.readline().strip().split(' ')[0]
 
             #sleep(random.randrange(0,4))
             #print "\tsquidguard said : [%s]" % (out)
 
-            response.append('%s %s' % (caller, out.split(' ')[0]));
+            if out:
+                response.append('%s %s' % (caller, out));
+            else:
+                response.append('%s' % caller);
+
         # send answer to client socket
         if response:
             listener.sendto('%d %s\0' % (id, '\0'.join(response)), client)

@@ -33,7 +33,7 @@ struct pending_req {
 };
 
 /* pendings hashmap is cleaned every QUEUE_CLEANUP_PERIOD milliseconds */
-#define QUEUE_CLEANUP_PERIOD 40
+#define QUEUE_CLEANUP_PERIOD 100
 
 struct mux_context {
   int server;        /* UDP socket to guardserv */
@@ -199,18 +199,25 @@ cleanup_pendings(mux_context_t mux, struct timeval *now) {
        iter++) {
     hashmap_return_entry(mux->pendings, iter, &key, (void**)&req);
 
-    if (req->seq <= 10) {
-      timeout = 6 * (1 + req->seq) * 1000 * 1000;
-    } else {
-      /* wait for 30 more seconds a couple of times */
-      timeout = (60 + 30 * (12 - req->seq)) * 1000 * 1000;
+    if (req->seq == 2) {
+      /* this request may last long : realloc to save space */
+      req->buffer = (char*)realloc((void*)req->buffer, req->len);
     }
+
+    if (req->seq <= 6) {
+      /* timeout schedule is 20ms, 40ms, 80ms, ..., 1280ms, ... */
+      timeout = 10 * (2 << req->seq) * 1000;
+    } else {
+      /* ..., 2048ms, 4096ms, ... , 65536ms */
+      timeout = (2 << req->seq) * 1000;
+    }
+
     if (now->tv_sec * 1000000 + now->tv_usec -
 	req->time.tv_sec * 1000000 - req->time.tv_usec > timeout) {
       log_message(LOG_INFO, "timeout, seq=%d", req->seq);
 
       req->seq++;
-      if (req->seq >= 12) {
+      if (req->seq >= 16) {
 	/* enough is enough : cancel request */
 	free(req->buffer);
 	hashmap_remove(mux->pendings, key);
@@ -252,8 +259,6 @@ request_flush(mux_context_t mux) {
   }
 
   /* insert request in pendings */
-  mux->request.buffer = (char*)realloc((void*)mux->request.buffer,
-				       mux->request.len);
   snprintf(key, sizeof(key), "%d", mux->request.id);
   if ( hashmap_insert(mux->pendings, key,
 		      (void*)&mux->request, sizeof(struct pending_req)) < 0 ) {
@@ -286,7 +291,6 @@ queue_request(mux_context_t mux, zmq_msg_t messages[7], struct timeval *now) {
   char *p;
   int len;
 
-  memcpy(&mux->request.time, now, sizeof(struct timeval));
 
   /* build request string of the form : */
   /* ID URL IP/HOST IDENT METHOD */
@@ -312,6 +316,11 @@ queue_request(mux_context_t mux, zmq_msg_t messages[7], struct timeval *now) {
     }
   }
 
+  /* init time on first request */
+  if (mux->request.count == 0)
+    memcpy(&mux->request.time, now, sizeof(struct timeval));
+
+  /* copy fields */
   p = mux->request.buffer + mux->request.len;
  
   memcpy(p, zmq_msg_data(&messages[ID_MESSAGE]), zmq_msg_size(&messages[ID_MESSAGE]));
@@ -456,11 +465,12 @@ handle_response(mux_context_t mux, void *clients, struct timeval *now) {
     zmq_sender = response;
     do {
       response++; len--;
-    } while (*response != ' ' && *response && len > 0);
-    if (*response == ' ' || !*response) {
+    } while (*response != ' ' && *response);
+    if (*response == ' ') {
       *response++ = '\0';
-    } else {
-      log_message(LOG_ERR, "invalid response ID");
+      len --;
+    } else if (*response != '\0') {
+      log_message(LOG_ERR, "invalid response ID in [%s], len=%d", zmq_sender, len);
       return -1;
     }
 
@@ -472,6 +482,9 @@ handle_response(mux_context_t mux, void *clients, struct timeval *now) {
     /* move pointer to tail */
     len -= strlen(response) + 1;
     response += strlen(response) + 1;
+    if (len > 0)
+      log_message(LOG_ERR, "iterating at [%s], len=%d", response, len);
+
   }
 
   return 0;
@@ -512,9 +525,11 @@ worker_task(void *args) {
     if ( ret < 0 ){
       log_message(LOG_ERR, "error on poll : %s", strerror(errno));
     };
+
     if (pollers[0].revents & ZMQ_POLLIN) {
       /* a request from tinyproxy client */
       handle_client(mux, clients, &now);
+      request_flush(mux);
     }
 
     if ( pollers[1].revents & ZMQ_POLLIN ) {
@@ -523,12 +538,8 @@ worker_task(void *args) {
     }
 
     if ( ret == 0 ) {
-      /* no signal, time to clean-up */
-      if ((now.tv_usec >> 4) % 4 == 0)
-	cleanup_pendings(mux, &now);
+      cleanup_pendings(mux, &now);
     }
-    request_flush(mux);
-
   }
 
   zmq_close(clients);
