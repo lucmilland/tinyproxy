@@ -30,25 +30,44 @@ struct pending_req {
   int len;                  /* current length of buffer */
   char *buffer;
   int count;                /* number of requests in buffer */
+  int guard_index; /* index in guardservs of server used to send this */
 };
 
 /* pendings hashmap is cleaned every QUEUE_CLEANUP_PERIOD milliseconds */
 #define QUEUE_CLEANUP_PERIOD 40
 
-struct mux_context {
-  int server;        /* UDP socket to guardserv */
+/*
+ * A socket to a foreign guardserv
+ */
+struct guard_socket {
+  int fd;          /* UDP socket to guardserv */
   struct sockaddr_in sockaddr;
   socklen_t socklen;
+  float mean_time; /* weighted average of previous response times, in milliseconds */
+
+  /* current health state of connection. bigger is better.
+     values <= 0 means disconnected
+  */
+  int health;
+};
+
+/* maximum number of guardservers we can sendto */
+#define MAX_GUARDSERVERS 3
+struct guard_socket guardservs[MAX_GUARDSERVERS]; /* list of guardservers */
+
+struct mux_context {
   void *zmq_context; /* ZMQ context for the following */
   hashmap_t pendings;/* pending calls hashmap */
   pthread_t worker_thread;  /* thread listening for queries from tinyproxy */
+  char *hostname;
+  int need_reconnect; /* some sockets need reconnect */
   struct pending_req request; /* current request beeing built */
-  float mean_time; /* weighted average of previous response times */
 };
 typedef struct mux_context *mux_context_t;
 
 /* forward declarations */
 static int request_init(struct pending_req *req, int id);
+
 
 
 /***************
@@ -108,13 +127,161 @@ get_server_connection(const char *hostname) {
 }
 
 /*
+ * get a connected guardserver that is not the one at index.
+ * return -1 if none can be found.
+ */
+static int
+guardsockets_get_other(int guard) {
+  int i, idx;
+  int seed;
+
+  seed = rand();
+
+  for (i=0; i < MAX_GUARDSERVERS; i++) {
+    idx = (i + seed) % MAX_GUARDSERVERS;
+    if (guardservs[idx].fd != -1 && idx != guard) {
+      return idx;
+    }
+  }
+  return -1;
+}
+
+/*
+ * get fastest guardserver. 
+ * return -1 if none can be found.
+ */
+static int
+guardsockets_get_fastest(void) {
+  int i;
+  int fastest = -1;
+
+  /* lie, sometimes, and return some random server for testing */
+  if (rand() % 100 == 0) {
+    fastest = guardsockets_get_other(-1);
+    if (fastest != -1) return fastest;
+  }
+
+  /* otherwise, really get fastest server */
+  for (i=0; i < MAX_GUARDSERVERS; i++) {
+    if (guardservs[i].fd != -1 && 
+	(fastest == -1 || 
+	 guardservs[i].mean_time < guardservs[fastest].mean_time)) {
+      fastest = i;
+    }
+  }
+  
+  return fastest;
+}
+
+/* remove any call in pendings that refers to guard,
+   moving them to another guard if available */
+static void
+purge_pendings(hashmap_t requests, int guard) {
+  hashmap_iter iter;
+  char *key;
+  struct pending_req *req;
+  int other;
+
+  other = guardsockets_get_other(guard);
+  
+  for (iter = hashmap_first(requests);
+       !hashmap_is_end(requests, iter); 
+       iter++) {
+    hashmap_return_entry(requests, iter, &key, (void**)&req);
+    if (req->guard_index == guard) {
+      if (other != -1) {
+	req->guard_index = other;
+	req->seq = 3; /* small shortcut to re-send request quickly */
+      } else {
+	/* no other guard is available : forget request */
+	free(req->buffer);
+	hashmap_remove(requests, key);
+	iter --;
+      }
+    }
+  }
+}
+/*
+ * reconnect guardservers
+ */
+static int
+guardsockets_reconnect(mux_context_t mux) {
+  struct addrinfo *rp, *serv_addr;
+  int count;
+
+  /* get server addresses */
+  serv_addr = get_server_connection(mux->hostname);
+  if (!serv_addr) {
+    log_message(LOG_ERR, "Can't resolve %s", mux->hostname);
+    return -1;
+  }
+
+  for (count = 0, rp = serv_addr ; 
+       count < MAX_GUARDSERVERS && rp != NULL ;
+       rp = rp->ai_next) {
+
+    if (guardservs[count].health > 0) {
+      /* socket is in good shape. keep it. */
+      count ++;
+      continue;
+    }
+
+    log_message(LOG_INFO, "Trying to guardserv at %s", 
+		inet_ntoa(((struct sockaddr_in *)rp->ai_addr)->sin_addr));
+
+    if (guardservs[count].fd != -1) {
+      /* purge pending calls before closing */
+      purge_pendings(mux->pendings, count);
+      close(guardservs[count].fd);
+    }
+
+    guardservs[count].fd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+
+    if (guardservs[count].fd == -1)
+      /* can't create socket, move to next server */
+      continue;
+
+    memcpy(&guardservs[count].sockaddr, rp->ai_addr, rp->ai_addrlen);
+    guardservs[count].socklen = rp->ai_addrlen;
+    /* start with 40ms average response time */
+    guardservs[count].mean_time = 40;
+    guardservs[count].health = 100;
+
+    count ++;
+  }
+  if (count == 0) {
+    log_message(LOG_ERR, "Can't create socket");
+    return -1;
+  }
+
+  freeaddrinfo(serv_addr);
+  return 0;
+}
+
+/*
+ * init guardserver connexions to hostname
+ */
+static int
+guardsockets_init(mux_context_t mux) {
+  int i;
+
+  for (i = 0; i < MAX_GUARDSERVERS; i++) {
+    guardservs[i].fd = -1;
+    guardservs[i].health = -1;
+  }
+
+  guardsockets_reconnect(mux);
+
+  return 0;
+}
+
+/*
  * Init a new context
  * Return NULL on error
  */
 static mux_context_t
 mux_init(char *hostname) {
   mux_context_t ctx;
-  struct addrinfo *rp, *serv_addr;
 
   ctx = (mux_context_t)malloc(sizeof(struct mux_context));
   if (!ctx) {
@@ -122,43 +289,20 @@ mux_init(char *hostname) {
     return NULL;
   }
 
+  ctx->hostname = hostname;
+  ctx->need_reconnect = 0;
+
   /* initialize pendings queue */
   ctx->pendings = hashmap_create(32);
 
-  /* init upstream socket */
-  serv_addr = get_server_connection(hostname);
-  if (!serv_addr) {
-    log_message(LOG_ERR, "Can't connect to %s", hostname);
-    return NULL;
-  }
-
-  /* TODO: select ones of known servers  */
-  for (rp = serv_addr; rp != NULL; rp = rp->ai_next) {
-
-    ctx->server = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-
-    if (ctx->server == -1)
-      continue;
-
-    memcpy(&ctx->sockaddr, rp->ai_addr, rp->ai_addrlen);
-    ctx->socklen = rp->ai_addrlen;
-    break;
-
-    close(ctx->server);
-  }
-  if (rp == NULL) {
-    log_message(LOG_ERR, "Can't create socket");
-    return NULL;
-  }
-  freeaddrinfo(serv_addr);
+  /* initialize guardserv connexions */
+  guardsockets_init(ctx);
 
   /* init zmq sockets */
   ctx->zmq_context = zmq_init(1);
 
   /* init request queues */
   request_init(&ctx->request, 17);
-
-  ctx->mean_time = 40; /* 40ms average response time */
 
   return ctx;
 }
@@ -196,6 +340,7 @@ cleanup_pendings(mux_context_t mux, struct timeval *now) {
   char *key;
   struct pending_req *req;
   int timeout;
+  int guard;
 
   for (iter = hashmap_first(mux->pendings);
        !hashmap_is_end(mux->pendings, iter); 
@@ -217,19 +362,46 @@ cleanup_pendings(mux_context_t mux, struct timeval *now) {
 
     if (now->tv_sec * 1000000 + now->tv_usec -
 	req->time.tv_sec * 1000000 - req->time.tv_usec > timeout) {
-      log_message(LOG_INFO, "timeout, seq=%d", req->seq);
+      log_message(LOG_INFO, "timeout, req=%d, seq=%d, timeout=%fms, serv=%s",
+		  req->id, req->seq, timeout / 1000., 
+		  inet_ntoa(guardservs[req->guard_index].sockaddr.sin_addr));
 
       req->seq++;
       if (req->seq >= 12) {
 	/* enough is enough : cancel request */
 	free(req->buffer);
 	hashmap_remove(mux->pendings, key);
+	iter --;
+
+	/* flag for reconnexion */
+	guardservs[req->guard_index].health = -1;
+	mux->need_reconnect = 1;
+
+	continue;
+
       } else {
-	/* re-emit iff timeout is more than 120% of mean_time */
-	if (timeout > mux->mean_time * 1.2) {
+
+	if (timeout > 1 * 1000 * 1000) {
+	  /* when timeout is above 1s, re-emit to another guardserver */
+	  guard = guardsockets_get_other(req->guard_index);
+	  if (guard != -1) {
+	    req->guard_index = guard;
+	  } else {
+	    guard = req->guard_index;
+	  }
+	} else {
+	  guard = req->guard_index;
+	}
+
+	/* re-emit when timeout is more than 140% of mean_time */
+	if (timeout / 1000.  > guardservs[guard].mean_time * 1.4) {
 	  /* re-emit */
-	  sendto(mux->server, req->buffer, req->len, 0,
-		 &mux->sockaddr, mux->socklen);
+	  log_message(LOG_INFO, "re-emit, req=%d, seq=%d, serv=%s (%d)",
+		      req->id, req->seq,
+		      inet_ntoa(guardservs[guard].sockaddr.sin_addr), guard);
+	  sendto(guardservs[guard].fd, req->buffer, req->len, 0,
+		 &guardservs[guard].sockaddr,
+		 guardservs[guard].socklen);
 	}
       }
     }
@@ -249,6 +421,7 @@ request_init(struct pending_req *req, int id) {
   *(uint32_t*)(req->buffer) = htonl(id);
   req->len += sizeof(uint32_t);
   req->count = 0;
+  req->guard_index = guardsockets_get_fastest();
   return 0;
 }
 
@@ -273,8 +446,10 @@ request_flush(mux_context_t mux) {
   }
 
   /* send request to guardserv */
-  sendto(mux->server, mux->request.buffer, mux->request.len, 0,
-	 &mux->sockaddr, mux->socklen);
+  sendto(guardservs[mux->request.guard_index].fd, 
+	 mux->request.buffer, mux->request.len, 0,
+	 &guardservs[mux->request.guard_index].sockaddr,
+	 guardservs[mux->request.guard_index].socklen);
 
   /* init new request */
   request_init(&mux->request, mux->request.id + 1);
@@ -414,7 +589,7 @@ handle_client(mux_context_t mux, void *clients, struct timeval *now) {
  * Handle listener response
  */
 static int
-handle_response(mux_context_t mux, void *clients, struct timeval *now) {
+handle_response(mux_context_t mux, int guard, void *clients, struct timeval *now) {
   int len;
   int delta;
   struct pending_req *req;
@@ -426,20 +601,21 @@ handle_response(mux_context_t mux, void *clients, struct timeval *now) {
   for ( ;; ) {
 
     /* read for a response */
-    len = recv(mux->server, &buffer, sizeof(buffer), MSG_DONTWAIT);
-    /* fprintf(stderr, "answer : %d bytes : [%s]\n", len, buffer); */
+    len = recv(guardservs[guard].fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
+    /* log_message(LOG_INFO, "answer : %d bytes : [%s]\n", len, buffer); */
 
     if (len == -1) {
-      if (errno ==  EAGAIN) {
+      if (errno ==  EAGAIN || errno == EWOULDBLOCK) {
 	/* done reading messages */
 	break;
       } else {
-	log_message(LOG_ERR, "error while reading response");
+	log_message(LOG_ERR, "error while reading response : %s", strerror(errno));
 	return -1;
       }
     } else if (len == 0) {
       log_message(LOG_ERR, "peer has closed connection");
-      /* TODO : schedule a reconnect */
+      guardservs[guard].health = -1;
+      mux->need_reconnect = 1;
       return -1;
     } else if (len < 3) {
       log_message(LOG_ERR, "response is too short");
@@ -470,10 +646,10 @@ handle_response(mux_context_t mux, void *clients, struct timeval *now) {
     /* register request duration to mean_time*/
     delta = now->tv_sec * 1000 + now->tv_usec / 1000 -
       req->time.tv_sec * 1000 - req->time.tv_usec / 1000;
-    mux->mean_time = (mux->mean_time + 0.2 * delta) / 1.2;
+    guardservs[req->guard_index].mean_time = ( guardservs[req->guard_index].mean_time + 0.2 * delta) / 1.2;
 
     log_message(LOG_INFO, "Request time %d ms. id = [%s]. Mean : %f ms",
-		delta, id, mux->mean_time);
+		delta, id, guardservs[req->guard_index].mean_time);
 
 
     /* split responses of the form :
@@ -502,7 +678,6 @@ handle_response(mux_context_t mux, void *clients, struct timeval *now) {
       response += strlen(response) + 1;
     }
   }
-
   return 0;
 }
 
@@ -512,11 +687,13 @@ handle_response(mux_context_t mux, void *clients, struct timeval *now) {
 static void *
 worker_task(void *args) {
   mux_context_t mux;
-  zmq_pollitem_t pollers[2];
+  zmq_pollitem_t pollers[1 + MAX_GUARDSERVERS];
+  int polled_guards[1 + MAX_GUARDSERVERS];
   void *clients;     /* ZMQ socket to tinyproxys (they are clients) */
   struct timeval now;
   struct timeval lastcleanup;
-  int ret;
+  int ret, i;
+  int guard, count;
 
   mux = (mux_context_t)args;
 
@@ -529,15 +706,23 @@ worker_task(void *args) {
   pollers[0].events = ZMQ_POLLIN;
   pollers[0].revents = 0;
 
-  pollers[1].socket = NULL;
-  pollers[1].fd = mux->server;
-  pollers[1].events = ZMQ_POLLIN;
-  pollers[1].revents = 0;
+  count = 1;
+
+  for (guard = 0; guard < MAX_GUARDSERVERS; guard ++) {
+    if (guardservs[guard].fd != -1) {
+      pollers[count].socket = NULL;
+      pollers[count].fd = guardservs[guard].fd;
+      pollers[count].events = ZMQ_POLLIN;
+      pollers[count].revents = 0;
+      polled_guards[count] = guard;
+      count++;
+    }
+  }
 
   gettimeofday(&lastcleanup, NULL);
 
   while (1) {
-    ret = zmq_poll (pollers, 2, QUEUE_CLEANUP_PERIOD * 1000);
+    ret = zmq_poll (pollers, count, QUEUE_CLEANUP_PERIOD * 1000);
 
     gettimeofday(&now, NULL);
 
@@ -551,15 +736,22 @@ worker_task(void *args) {
       request_flush(mux);
     }
 
-    if ( pollers[1].revents & ZMQ_POLLIN ) {
-      /* a response from guardserv */
-      handle_response(mux, clients, &now);
+    for (i = 1; i < count; i ++) {
+      if ( pollers[i].revents & ZMQ_POLLIN ) {
+	/* a response from guardserv */
+	handle_response(mux, polled_guards[i], clients, &now);
+      }
     }
 
     if ( (now.tv_sec - lastcleanup.tv_sec) * 1000000 + 
 	 (now.tv_usec - lastcleanup.tv_usec) > QUEUE_CLEANUP_PERIOD * 1000 ) {
       cleanup_pendings(mux, &now);
       memcpy(&lastcleanup, &now, sizeof(struct timeval));
+    }
+
+    if (mux->need_reconnect) {
+      guardsockets_reconnect(mux);
+      mux->need_reconnect= 0;
     }
   }
 
