@@ -117,25 +117,28 @@ void remote_filter_destroy (void)
 }
 
 /* Return NULL to allow, non-NULL to redirect */
-char *remote_filter (struct request_s *request, const char *url,
-		     struct conn_s *connptr)
+char *remote_filter_barrier (void)
 {
+  zmq_msg_t message;
+  int size;
   char* reply;
 
-  log_message (LOG_INFO, "filtering: %s %s %s %d/%s\n", request->host,
-	       request->method, request->protocol, request->port,
-	       request->path);
-
-  if (!already_init)
-    return (char *)NULL;
-
-  s_sendmore(requester, connptr->client_ip_addr);
-  s_sendmore(requester, connptr->client_string_addr);
-  s_sendmore(requester, config.ident);
-  s_sendmore(requester, request->method);
-  s_send(requester, url);
-
-  reply = s_recv(requester);
+  zmq_msg_init (&message);
+  if (zmq_recv (requester, &message, ZMQ_NOBLOCK) == -1) {
+    if (errno == EAGAIN) {
+      log_message (LOG_INFO, "Waiting response from filter...");
+      zmq_recv (requester, &message, 0);
+    } else {
+      return (NULL);
+    }
+  } else {
+    log_message (LOG_INFO, "Filter response is already here. Good.");
+  }
+  size = zmq_msg_size (&message);
+  reply = (char *)malloc (size + 1);
+  memcpy (reply, zmq_msg_data (&message), size);
+  zmq_msg_close (&message);
+  reply[size] = '\0';
 
   if (reply == NULL) {
     log_message (LOG_ERR, "Error: %d\n", errno);
@@ -149,6 +152,25 @@ char *remote_filter (struct request_s *request, const char *url,
     }
   }
   return (char *)NULL;
+}
+
+/* Send a filtering request */
+void remote_filter (struct request_s *request, const char *url,
+		    struct conn_s *connptr)
+{
+
+  log_message (LOG_INFO, "filtering: %s %s %s %d/%s\n", request->host,
+	       request->method, request->protocol, request->port,
+	       request->path);
+
+  if (!already_init)
+    return;
+
+  s_sendmore(requester, connptr->client_ip_addr);
+  s_sendmore(requester, connptr->client_string_addr);
+  s_sendmore(requester, config.ident);
+  s_sendmore(requester, request->method);
+  s_send(requester, url);
 }
 
 /*

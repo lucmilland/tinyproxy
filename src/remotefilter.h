@@ -31,8 +31,8 @@ typedef enum {
 
 extern void remote_filter_init (void);
 extern void remote_filter_destroy (void);
-extern char *remote_filter (struct request_s *request, const char *url, struct conn_s *connptr);
-
+extern void remote_filter (struct request_s *request, const char *url, struct conn_s *connptr);
+extern char *remote_filter_barrier(void);
 extern void remote_filter_set_default_policy (remote_filter_policy_t policy);
 
 #endif
