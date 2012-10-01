@@ -39,8 +39,8 @@ def guard_worker(context, listener, terminate):
         try:
             client = zsock.recv_pyobj()
             _in = zsock.recv()
-            id = struct.unpack("!l", _in[0:4])[0]
-            requests = _in[4:].split('\0')
+            id, version, seq = struct.unpack("!lHB", _in[0:7])
+            requests = _in[7:].split('\0')
             del requests[-1]  # delete last empty string 
         except:
             terminate.set()
@@ -50,7 +50,7 @@ def guard_worker(context, listener, terminate):
         response = []
 
         '''
-        print "\ndoing for %s :" % id
+        print "\ndoing for %s (%s, %d, %d):" % (id, client, version, seq)
         for request in requests:
             print "\t%s" % request
         '''

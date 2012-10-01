@@ -23,6 +23,14 @@
    various encapsulations */
 #define MAX_MTU 1400
 
+#define PROTOCOL_VERSION 0x0001
+
+struct packet_header {
+  uint32_t id;
+  uint16_t version;
+  char seq;
+} __attribute__((__packed__));
+
 struct pending_req {
   uint32_t id;
   uint32_t seq;             /* times this request was emitted */
@@ -139,7 +147,7 @@ guardsockets_get_other(int guard) {
 
   for (i=0; i < MAX_GUARDSERVERS; i++) {
     idx = (i + seed) % MAX_GUARDSERVERS;
-    if (guardservs[idx].fd != -1 && idx != guard) {
+    if (guardservs[idx].fd != -1 && idx != guard && guardservs[i].health > 0) {
       return idx;
     }
   }
@@ -163,7 +171,8 @@ guardsockets_get_fastest(void) {
 
   /* otherwise, really get fastest server */
   for (i=0; i < MAX_GUARDSERVERS; i++) {
-    if (guardservs[i].fd != -1 && 
+    if (guardservs[i].fd != -1 &&
+	guardservs[i].health > 0 &&
 	(fastest == -1 || 
 	 guardservs[i].mean_time < guardservs[fastest].mean_time)) {
       fastest = i;
@@ -245,7 +254,7 @@ guardsockets_reconnect(mux_context_t mux) {
     guardservs[count].socklen = rp->ai_addrlen;
     /* start with 40ms average response time */
     guardservs[count].mean_time = 40;
-    guardservs[count].health = 100;
+    guardservs[count].health = 20;
 
     count ++;
   }
@@ -339,6 +348,7 @@ cleanup_pendings(mux_context_t mux, struct timeval *now) {
   hashmap_iter iter;
   char *key;
   struct pending_req *req;
+  struct packet_header header;
   int timeout;
   int guard;
 
@@ -373,7 +383,7 @@ cleanup_pendings(mux_context_t mux, struct timeval *now) {
 	hashmap_remove(mux->pendings, key);
 	iter --;
 
-	/* flag for reconnexion */
+	/* flag socket for reconnexion */
 	guardservs[req->guard_index].health = -1;
 	mux->need_reconnect = 1;
 
@@ -381,11 +391,14 @@ cleanup_pendings(mux_context_t mux, struct timeval *now) {
 
       } else {
 
-	if (timeout > 1 * 1000 * 1000) {
-	  /* when timeout is above 1s, re-emit to another guardserver */
+	if (timeout > 2 * 1000 * 1000) {
+	  /* when timeout is above 2s, re-emit to another guardserver */
 	  guard = guardsockets_get_other(req->guard_index);
 	  if (guard != -1) {
 	    req->guard_index = guard;
+	    guardservs[req->guard_index].health -= 1;
+	    if (guardservs[req->guard_index].health <= 0)
+	      mux->need_reconnect = 1;
 	  } else {
 	    guard = req->guard_index;
 	  }
@@ -399,6 +412,13 @@ cleanup_pendings(mux_context_t mux, struct timeval *now) {
 	  log_message(LOG_INFO, "re-emit, req=%d, seq=%d, serv=%s (%d)",
 		      req->id, req->seq,
 		      inet_ntoa(guardservs[guard].sockaddr.sin_addr), guard);
+
+	  /* init header */
+	  header.version = htons(PROTOCOL_VERSION);
+	  header.id = htonl(req->id);
+	  header.seq = (char)req->seq;
+	  memcpy(req->buffer, &header, sizeof(struct packet_header));
+
 	  sendto(guardservs[guard].fd, req->buffer, req->len, 0,
 		 &guardservs[guard].sockaddr,
 		 guardservs[guard].socklen);
@@ -418,8 +438,10 @@ request_init(struct pending_req *req, int id) {
   req->seq = 0;  
   req->len = 0;
   req->buffer = (char*)malloc(MAX_MTU);
-  *(uint32_t*)(req->buffer) = htonl(id);
-  req->len += sizeof(uint32_t);
+
+  /* leave room for header */
+  req->len += sizeof(struct packet_header);
+
   req->count = 0;
   req->guard_index = guardsockets_get_fastest();
   return 0;
@@ -431,6 +453,7 @@ request_init(struct pending_req *req, int id) {
 static int
 request_flush(mux_context_t mux) {
   char key[10];
+  struct packet_header header;
 
   if (mux->request.count == 0) {
     /* nothing to flush */
@@ -444,6 +467,12 @@ request_flush(mux_context_t mux) {
     log_message(LOG_ERR, "can't insert key (%s)", key);
     return -1;
   }
+
+  /* init header */
+  header.version = htons(PROTOCOL_VERSION);
+  header.id = htonl(mux->request.id);
+  header.seq = (char)mux->request.seq;
+  memcpy(mux->request.buffer, &header, sizeof(struct packet_header));
 
   /* send request to guardserv */
   sendto(guardservs[mux->request.guard_index].fd, 
