@@ -235,7 +235,7 @@ guardsockets_reconnect(mux_context_t mux) {
       continue;
     }
 
-    log_message(LOG_INFO, "Trying to guardserv at %s", 
+    log_message(LOG_INFO, "Trying to connect to guardserv at %s", 
 		inet_ntoa(((struct sockaddr_in *)rp->ai_addr)->sin_addr));
 
     if (guardservs[count].fd != -1) {
