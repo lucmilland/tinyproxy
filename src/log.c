@@ -188,8 +188,13 @@ void log_message (int level, const char *fmt, ...)
 
                 ret = write (log_file_fd, str, strlen (str));
                 if (ret == -1) {
-                        log_message (LOG_WARNING,
-                                     "Could not write to log file");
+                        config.syslog = TRUE;
+
+                        log_message(LOG_CRIT, "ERROR: Could not write to log "
+                                    "file %s: %s.",
+                                    config.logf_name, strerror(errno));
+                        log_message(LOG_CRIT,
+                                    "Falling back to syslog logging");
                 }
 
                 fsync (log_file_fd);
@@ -258,10 +263,10 @@ int setup_logging (void)
                         config.syslog = TRUE;
 
                         log_message (LOG_CRIT, "ERROR: Could not create log "
-                                     "file %s: %s.\n",
+                                     "file %s: %s.",
                                      config.logf_name, strerror (errno));
                         log_message (LOG_CRIT,
-                                     "Falling back to syslog logging\n");
+                                     "Falling back to syslog logging.");
                 }
         }
 

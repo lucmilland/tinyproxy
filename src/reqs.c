@@ -187,18 +187,22 @@ static int strip_return_port (char *host)
 }
 
 /*
- * Pull the information out of the URL line.  This will handle both HTTP
- * and FTP (proxied) URLs.
+ * Pull the information out of the URL line.
+ * This expects urls with the initial '<proto>://'
+ * part stripped and hence can handle http urls,
+ * (proxied) ftp:// urls and https-requests that
+ * come in without the proto:// part via CONNECT.
  */
-static int extract_http_url (const char *url, struct request_s *request)
+static int extract_url (const char *url, int default_port,
+                        struct request_s *request)
 {
         char *p;
-        int len;
         int port;
 
         /* Split the URL on the slash to separate host from path */
         p = strchr (url, '/');
         if (p != NULL) {
+                int len;
                 len = p - url;
                 request->host = (char *) safemalloc (len + 1);
                 memcpy (request->host, url, len);
@@ -217,12 +221,15 @@ static int extract_http_url (const char *url, struct request_s *request)
 
         /* Find a proper port in www.site.com:8001 URLs */
         port = strip_return_port (request->host);
-        request->port = (port != 0) ? port : HTTP_PORT;
+        request->port = (port != 0) ? port : default_port;
 
         /* Remove any surrounding '[' and ']' from IPv6 literals */
         p = strrchr (request->host, ']');
         if (p && (*(request->host) == '[')) {
-                request->host++;
+                memmove(request->host, request->host + 1,
+                        strlen(request->host) - 2);
+                *p = '\0';
+                p--;
                 *p = '\0';
         }
 
@@ -235,31 +242,6 @@ ERROR_EXIT:
                 safefree (request->path);
 
         return -1;
-}
-
-/*
- * Extract the URL from a SSL connection.
- */
-static int extract_ssl_url (const char *url, struct request_s *request)
-{
-        request->host = (char *) safemalloc (strlen (url) + 1);
-        if (!request->host)
-                return -1;
-
-        if (sscanf (url, "%[^:]:%hu", request->host, &request->port) == 2) ;
-        else if (sscanf (url, "%s", request->host) == 1)
-                request->port = HTTP_PORT_SSL;
-        else {
-                log_message (LOG_ERR, "extract_ssl_url: Can't parse URL.");
-
-                safefree (request->host);
-                return -1;
-        }
-
-        /* Remove the username/password if they're present */
-        strip_username_password (request->host);
-
-        return 0;
 }
 
 /*
@@ -376,15 +358,6 @@ BAD_REQUEST_ERROR:
                 goto fail;
         }
 
-        if (!url) {
-                log_message (LOG_ERR,
-                             "process_request: Null URL on file descriptor %d",
-                             connptr->client_fd);
-                indicate_http_error (connptr, 400, "Bad Request",
-                                     "detail", "Request has an empty URL",
-                                     "url", url, NULL);
-                goto fail;
-        }
 #ifdef REVERSE_SUPPORT
         if (config.reversepath_list != NULL) {
                 /*
@@ -397,12 +370,18 @@ BAD_REQUEST_ERROR:
 
                 reverse_url = reverse_rewrite_url (connptr, hashofheaders, url);
 
-                if (!reverse_url) {
+                if (reverse_url != NULL) {
+                        safefree (url);
+                        url = reverse_url;
+                } else if (config.reverseonly) {
+                        log_message (LOG_ERR,
+                                     "Bad request, no mapping for '%s' found",
+                                     url);
+                        indicate_http_error (connptr, 400, "Bad Request",
+                                             "detail", "No mapping found for "
+                                             "requested url", "url", url, NULL);
                         goto fail;
                 }
-
-                safefree (url);
-                url = reverse_url;
         }
 #endif
 
@@ -411,14 +390,14 @@ BAD_REQUEST_ERROR:
         {
                 char *skipped_type = strstr (url, "//") + 2;
 
-                if (extract_http_url (skipped_type, request) < 0) {
+                if (extract_url (skipped_type, HTTP_PORT, request) < 0) {
                         indicate_http_error (connptr, 400, "Bad Request",
                                              "detail", "Could not parse URL",
                                              "url", url, NULL);
                         goto fail;
                 }
         } else if (strcmp (request->method, "CONNECT") == 0) {
-                if (extract_ssl_url (url, request) < 0) {
+                if (extract_url (url, HTTP_PORT_SSL, request) < 0) {
                         indicate_http_error (connptr, 400, "Bad Request",
                                              "detail", "Could not parse URL",
                                              "url", url, NULL);
@@ -536,6 +515,7 @@ static int pull_client_data (struct conn_s *connptr, long int length)
 {
         char *buffer;
         ssize_t len;
+        int ret;
 
         buffer =
             (char *) safemalloc (min (MAXBUFFSIZE, (unsigned long int) length));
@@ -561,18 +541,30 @@ static int pull_client_data (struct conn_s *connptr, long int length)
          * return and line feed) at the end of a POST message.  These
          * need to be eaten for tinyproxy to work correctly.
          */
-        socket_nonblocking (connptr->client_fd);
+        ret = socket_nonblocking (connptr->client_fd);
+        if (ret != 0) {
+                log_message(LOG_ERR, "Failed to set the client socket "
+                            "to non-blocking: %s", strerror(errno));
+                goto ERROR_EXIT;
+        }
+
         len = recv (connptr->client_fd, buffer, 2, MSG_PEEK);
-        socket_blocking (connptr->client_fd);
+
+        ret = socket_blocking (connptr->client_fd);
+        if (ret != 0) {
+                log_message(LOG_ERR, "Failed to set the client socket "
+                            "to blocking: %s", strerror(errno));
+                goto ERROR_EXIT;
+        }
 
         if (len < 0 && errno != EAGAIN)
                 goto ERROR_EXIT;
 
         if ((len == 2) && CHECK_CRLF (buffer, len)) {
-                ssize_t ret;
+                ssize_t bytes_read;
 
-                ret = read (connptr->client_fd, buffer, 2);
-                if (ret == -1) {
+                bytes_read = read (connptr->client_fd, buffer, 2);
+                if (bytes_read == -1) {
                         log_message
                                 (LOG_WARNING,
                                  "Could not read two bytes from POST message");
@@ -634,13 +626,24 @@ add_header_to_connection (hashmap_t hashofheaders, char *header, size_t len)
 #define MAX_HEADERS 10000
 
 /*
+ * Define maximum number of headers that we accept.
+ * This should be big enough to handle legitimate cases,
+ * but limited to avoid DoS.
+ */
+#define MAX_HEADERS 10000
+
+/*
  * Read all the headers from the stream
  */
 static int get_all_headers (int fd, hashmap_t hashofheaders)
 {
         char *line = NULL;
         char *header = NULL;
+<<<<<<< HEAD
 	int count;
+=======
+        int count;
+>>>>>>> 1e934118104d73793f7b9f3dae43e7dcca74ff0e
         char *tmp;
         ssize_t linelen;
         ssize_t len = 0;
@@ -716,11 +719,21 @@ static int get_all_headers (int fd, hashmap_t hashofheaders)
                 safefree (line);
         }
 
+<<<<<<< HEAD
 	/* if we get there, this is we reached MAX_HEADERS count.
 	   bail out with error */
 	safefree (header);
 	safefree (line);
 	return -1;
+=======
+        /*
+         * If we get here, this means we reached MAX_HEADERS count.
+         * Bail out with error.
+         */
+        safefree (header);
+        safefree (line);
+        return -1;
+>>>>>>> 1e934118104d73793f7b9f3dae43e7dcca74ff0e
 }
 
 /*
@@ -847,7 +860,7 @@ done:
 /*
  * Number of buckets to use internally in the hashmap.
  */
-#define HEADER_BUCKETS 32
+#define HEADER_BUCKETS 256
 
 /*
  * Here we loop through all the headers the client is sending. If we
@@ -1167,8 +1180,19 @@ static void relay_connection (struct conn_s *connptr)
         int maxfd = max (connptr->client_fd, connptr->server_fd) + 1;
         ssize_t bytes_received;
 
-        socket_nonblocking (connptr->client_fd);
-        socket_nonblocking (connptr->server_fd);
+        ret = socket_nonblocking (connptr->client_fd);
+        if (ret != 0) {
+                log_message(LOG_ERR, "Failed to set the client socket "
+                            "to non-blocking: %s", strerror(errno));
+                return;
+        }
+
+        ret = socket_nonblocking (connptr->server_fd);
+        if (ret != 0) {
+                log_message(LOG_ERR, "Failed to set the server socket "
+                            "to non-blocking: %s", strerror(errno));
+                return;
+        }
 
         last_access = time (NULL);
 
@@ -1243,7 +1267,14 @@ static void relay_connection (struct conn_s *connptr)
          * Here the server has closed the connection... write the
          * remainder to the client and then exit.
          */
-        socket_blocking (connptr->client_fd);
+        ret = socket_blocking (connptr->client_fd);
+        if (ret != 0) {
+                log_message(LOG_ERR,
+                            "Failed to set client socket to blocking: %s",
+                            strerror(errno));
+                return;
+        }
+
         while (buffer_size (connptr->sbuffer) > 0) {
                 if (write_buffer (connptr->client_fd, connptr->sbuffer) < 0)
                         break;
@@ -1253,7 +1284,14 @@ static void relay_connection (struct conn_s *connptr)
         /*
          * Try to send any remaining data to the server if we can.
          */
-        socket_blocking (connptr->server_fd);
+        ret = socket_blocking (connptr->server_fd);
+        if (ret != 0) {
+                log_message(LOG_ERR,
+                            "Failed to set server socket to blocking: %s",
+                            strerror(errno));
+                return;
+        }
+
         while (buffer_size (connptr->cbuffer) > 0) {
                 if (write_buffer (connptr->server_fd, connptr->cbuffer) < 0)
                         break;
@@ -1368,7 +1406,7 @@ get_request_entity(struct conn_s *connptr)
                 nread = read_buffer (connptr->client_fd, connptr->cbuffer);
                 if (nread < 0) {
                         log_message (LOG_ERR,
-                                     "Error reading readble client_fd %d",
+                                     "Error reading readable client_fd %d",
                                      connptr->client_fd);
                         ret = -1;
                 } else {

@@ -66,6 +66,9 @@ struct hashmap_s {
  * The contents of the key are converted to lowercase, so this function
  * is not case-sensitive.
  *
+ * This is Dan Bernstein's hash function as described, for example, here:
+ * http://www.cse.yorku.ca/~oz/hash.html
+ *
  * If any of the arguments are invalid a negative number is returned.
  */
 static int hashfunc (const char *key, unsigned int size, uint32_t seed)
@@ -78,11 +81,15 @@ static int hashfunc (const char *key, unsigned int size, uint32_t seed)
                 return -ERANGE;
 
         for (hash = seed; *key != '\0'; key++) {
+<<<<<<< HEAD
                 uint32_t bit = (hash & 1) ? (1 << (sizeof (uint32_t) * 8 - 1)) : 0;
 
                 hash >>= 1;
 
                 hash += tolower (*key) + bit;
+=======
+                hash = ((hash << 5) + hash) ^ tolower (*key);
+>>>>>>> 1e934118104d73793f7b9f3dae43e7dcca74ff0e
         }
 
         /* Keep the hash within the table limits */
@@ -107,7 +114,11 @@ hashmap_t hashmap_create (unsigned int nbuckets)
         if (!ptr)
                 return NULL;
 
+<<<<<<< HEAD
 	ptr->seed = (uint32_t)rand();
+=======
+        ptr->seed = (uint32_t)rand();
+>>>>>>> 1e934118104d73793f7b9f3dae43e7dcca74ff0e
         ptr->size = nbuckets;
         ptr->buckets = (struct hashbucket_s *) safecalloc (nbuckets,
                                                            sizeof (struct
@@ -495,4 +506,25 @@ ssize_t hashmap_remove (hashmap_t map, const char *key)
 
         /* The key was not found, so return 0 */
         return deleted;
+}
+
+/*
+ * Look up the value for a variable.
+ */
+char *lookup_variable (hashmap_t map, const char *varname)
+{
+        hashmap_iter result_iter;
+        char *key;
+        char *data;
+
+        result_iter = hashmap_find (map, varname);
+
+        if (hashmap_is_end (map, result_iter))
+                return (NULL);
+
+        if (hashmap_return_entry (map, result_iter,
+                                  &key, (void **) &data) < 0)
+                return (NULL);
+
+        return (data);
 }

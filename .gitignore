@@ -10,5 +10,6 @@ stamp-h1
 autom4te.cache
 cscope.files
 cscope.out
+compile
 *~
 tags

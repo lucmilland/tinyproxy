@@ -84,6 +84,9 @@ int opensock (const char *host, int port, const char *bind_to)
         assert (host != NULL);
         assert (port > 0);
 
+        log_message(LOG_INFO,
+                    "opensock: opening connection to %s:%d", host, port);
+
         memset (&hints, 0, sizeof (struct addrinfo));
         hints.ai_family = AF_UNSPEC;
         hints.ai_socktype = SOCK_STREAM;
@@ -96,6 +99,9 @@ int opensock (const char *host, int port, const char *bind_to)
                              "opensock: Could not retrieve info for %s", host);
                 return -1;
         }
+
+        log_message(LOG_INFO,
+                    "opensock: getaddrinfo returned for %s:%d", host, port);
 
         ressave = res;
         do {
@@ -162,21 +168,100 @@ int socket_blocking (int sock)
         return fcntl (sock, F_SETFL, flags & ~O_NONBLOCK);
 }
 
-/*
- * Start listening to a socket. Create a socket with the selected port.
- * The size of the socket address will be returned to the caller through
- * the pointer, while the socket is returned as a default return.
- *      - rjkaes
+
+/**
+ * Try to listen on one socket based on the addrinfo
+ * as returned from getaddrinfo.
+ *
+ * Return the file descriptor upon success, -1 upon error.
  */
-int listen_sock (uint16_t port, socklen_t * addrlen)
+static int listen_on_one_socket(struct addrinfo *ad)
+{
+        int listenfd;
+        int ret;
+        const int on = 1;
+        char numerichost[NI_MAXHOST];
+        int flags = NI_NUMERICHOST;
+
+        ret = getnameinfo(ad->ai_addr, ad->ai_addrlen,
+                          numerichost, NI_MAXHOST, NULL, 0, flags);
+        if (ret != 0) {
+                log_message(LOG_ERR, "error calling getnameinfo: %s",
+                            gai_strerror(errno));
+                return -1;
+        }
+
+        log_message(LOG_INFO, "trying to listen on host[%s], family[%d], "
+                    "socktype[%d], proto[%d]", numerichost,
+                    ad->ai_family, ad->ai_socktype, ad->ai_protocol);
+
+        listenfd = socket(ad->ai_family, ad->ai_socktype, ad->ai_protocol);
+        if (listenfd == -1) {
+                log_message(LOG_ERR, "socket() failed: %s", strerror(errno));
+                return -1;
+        }
+
+        ret = setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+        if (ret != 0) {
+                log_message(LOG_ERR,
+                            "setsockopt failed to set SO_REUSEADDR: %s",
+                            strerror(errno));
+                close(listenfd);
+                return -1;
+        }
+
+        if (ad->ai_family == AF_INET6) {
+                ret = setsockopt(listenfd, IPPROTO_IPV6, IPV6_V6ONLY, &on,
+                                 sizeof(on));
+                if (ret != 0) {
+                        log_message(LOG_ERR,
+                                    "setsockopt failed to set IPV6_V6ONLY: %s",
+                                    strerror(errno));
+                        close(listenfd);
+                        return -1;
+                }
+        }
+
+        ret = bind(listenfd, ad->ai_addr, ad->ai_addrlen);
+        if (ret != 0) {
+               log_message(LOG_ERR, "bind failed: %s", strerror (errno));
+               close(listenfd);
+               return -1;
+        }
+
+        ret = listen(listenfd, MAXLISTEN);
+        if (ret != 0) {
+                log_message(LOG_ERR, "listen failed: %s", strerror(errno));
+                close(listenfd);
+                return -1;
+        }
+
+        log_message(LOG_INFO, "listening on fd [%d]", listenfd);
+
+        return listenfd;
+}
+
+/*
+ * Start listening on a socket. Create a socket with the selected port.
+ * If the provided address is NULL, we may listen on multiple sockets,
+ * e.g. the wildcard addresse for IPv4 and IPv6, depending on what is
+ * supported. If the address is not NULL, we only listen on the first
+ * address reported by getaddrinfo that works.
+ *
+ * Upon success, the listen-fds are added to the listen_fds list
+ * and 0 is returned. Upon error,  -1 is returned.
+ */
+int listen_sock (const char *addr, uint16_t port, vector_t listen_fds)
 {
         struct addrinfo hints, *result, *rp;
         char portstr[6];
-        int listenfd;
-        const int on = 1;
+        int ret = -1;
 
         assert (port > 0);
-        assert (addrlen != NULL);
+        assert (listen_fds != NULL);
+
+        log_message(LOG_INFO, "listen_sock called with addr = '%s'",
+                    addr == NULL ? "(NULL)" : addr);
 
         memset (&hints, 0, sizeof (struct addrinfo));
         hints.ai_family = AF_UNSPEC;
@@ -185,7 +270,7 @@ int listen_sock (uint16_t port, socklen_t * addrlen)
 
         snprintf (portstr, sizeof (portstr), "%d", port);
 
-        if (getaddrinfo (config.ipAddr, portstr, &hints, &result) != 0) {
+        if (getaddrinfo (addr, portstr, &hints, &result) != 0) {
                 log_message (LOG_ERR,
                              "Unable to getaddrinfo() because of %s",
                              strerror (errno));
@@ -193,45 +278,34 @@ int listen_sock (uint16_t port, socklen_t * addrlen)
         }
 
         for (rp = result; rp != NULL; rp = rp->ai_next) {
-                listenfd = socket (rp->ai_family, rp->ai_socktype,
-                                   rp->ai_protocol);
-                if (listenfd == -1)
+                int listenfd;
+
+                listenfd = listen_on_one_socket(rp);
+                if (listenfd == -1) {
                         continue;
+                }
 
-                setsockopt (listenfd, SOL_SOCKET, SO_REUSEADDR, &on,
-                            sizeof (on));
+                vector_append (listen_fds, &listenfd, sizeof(int));
 
-                if (bind (listenfd, rp->ai_addr, rp->ai_addrlen) == 0)
-                        break;  /* success */
+                /* success */
+                ret = 0;
 
-                close (listenfd);
+                if (addr != NULL) {
+                        /*
+                         * Unless wildcard is requested, only listen
+                         * on the first result that works.
+                         */
+                        break;
+                }
         }
 
-        if (rp == NULL) {
-                /* was not able to bind to any address */
-                log_message (LOG_ERR,
-                             "Unable to bind listening socket "
-                             "to any address.");
-
-                freeaddrinfo (result);
-                return -1;
+        if (ret != 0) {
+                log_message (LOG_ERR, "Unable to listen on any address.");
         }
-
-        if (listen (listenfd, MAXLISTEN) < 0) {
-                log_message (LOG_ERR,
-                             "Unable to start listening socket because of %s",
-                             strerror (errno));
-
-                close (listenfd);
-                freeaddrinfo (result);
-                return -1;
-        }
-
-        *addrlen = rp->ai_addrlen;
 
         freeaddrinfo (result);
 
-        return listenfd;
+        return ret;
 }
 
 /*

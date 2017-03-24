@@ -192,7 +192,7 @@ display_usage (void)
 
         printf ("\n"
                 "For support and bug reporting instructions, please visit\n"
-                "<https://banu.com/tinyproxy/>.\n");
+                "<https://tinyproxy.github.io/>.\n");
 }
 
 static int
@@ -296,6 +296,16 @@ change_user (const char *program)
                                  program, config.group);
                         exit (EX_NOPERM);
                 }
+
+#ifdef HAVE_SETGROUPS
+                /* Drop all supplementary groups, otherwise these are inherited from the calling process */
+                if (setgroups (0, NULL) < 0) {
+                        fprintf (stderr,
+                                 "%s: Unable to drop supplementary groups.\n",
+                                 program);
+                        exit (EX_NOPERM);
+                }
+#endif
 
                 log_message (LOG_INFO, "Now running as group \"%s\".",
                              config.group);
@@ -425,8 +435,8 @@ main (int argc, char **argv)
 #endif /* FILTER_ENABLE */
 
         /* Start listening on the selected port. */
-        if (child_listening_sock (config.port) < 0) {
-                fprintf (stderr, "%s: Could not create listening socket.\n",
+        if (child_listening_sockets(config.listen_addrs, config.port) < 0) {
+                fprintf (stderr, "%s: Could not create listening sockets.\n",
                          argv[0]);
                 exit (EX_OSERR);
         }

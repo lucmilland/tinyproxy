@@ -19,12 +19,12 @@ m4_define([tinyproxy_stable],
           m4_if(m4_eval(tinyproxy_minor_version % 2), [0], [yes], [no]))
 
 AC_INIT([Tinyproxy], [tinyproxy_version],
-	[https://banu.com/tinyproxy/],
+	[https://tinyproxy.github.io/],
 	[tinyproxy])
 
 AC_CANONICAL_TARGET
-AM_INIT_AUTOMAKE([foreign dist-bzip2 dist-xz])
-AM_CONFIG_HEADER(config.h)
+AM_INIT_AUTOMAKE([dist-bzip2 dist-xz])
+AC_CONFIG_HEADERS(config.h)
 AC_CONFIG_MACRO_DIR([m4macros])
 
 #m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
@@ -131,6 +131,7 @@ if test x"$transparent_enabled" = x"yes"; then
    AC_DEFINE(TRANSPARENT_PROXY)
 fi
 
+<<<<<<< HEAD
 dnl Include remote squidGuard filtering
 AH_TEMPLATE([REMOTE_FILTER_ENABLE],
 	    [Defined if you would like remote squidGuard filtering code included.])
@@ -166,6 +167,8 @@ TP_ARG_ENABLE(regexcheck,
 
 AC_PROG_RANLIB
 
+=======
+>>>>>>> 1e934118104d73793f7b9f3dae43e7dcca74ff0e
 # This is required to build test programs below
 AC_PROG_CC
 
@@ -232,8 +235,10 @@ AC_FUNC_REALLOC
 
 AC_CHECK_FUNCS([gethostname inet_ntoa memchr memset select socket strcasecmp \
                 strchr strdup strerror strncasecmp strpbrk strstr strtol])
-AC_CHECK_FUNCS([isascii memcpy setrlimit ftruncate regcomp regexec])
-AC_CHECK_FUNCS([strlcpy strlcat])
+AC_CHECK_FUNCS([isascii memcpy memmove setrlimit ftruncate regcomp regexec])
+AC_CHECK_FUNCS([strlcpy strlcat setgroups])
+
+AC_CHECK_FUNCS([time rand srand])
 
 
 dnl Enable extra warnings
@@ -252,7 +257,12 @@ if test x"$debug_enabled" != x"yes" ; then
     CFLAGS="-DNDEBUG $CFLAGS"
 fi
 
+AS_ECHO_N(["checking to see if linker understands -z,defs... "])
+LDFLAGS_OLD="-Wl $LDFLAGS"
 LDFLAGS="-Wl,-z,defs $LDFLAGS"
+AC_LINK_IFELSE([AC_LANG_PROGRAM()],
+    AS_ECHO("yes"),
+    AS_ECHO("no"); LDFLAGS="$LDFLAGS_OLD")
 
 dnl
 dnl Make sure we can actually handle the "--with-*" and "--enable-*" stuff.
@@ -261,46 +271,6 @@ dnl
 dnl Handle the REGEX library
 if test x"$ac_cv_func_regexec" != x"yes"; then
     AC_MSG_ERROR([Could not locate the regexec() function])
-else
-    if test x"$regexcheck_enabled" = x"yes" ; then
-        AC_MSG_CHECKING([whether the system's regex library is broken])
-        AC_CACHE_VAL(tinyproxy_cv_regex_broken,
-                     [AC_TRY_RUN([
-#if HAVE_SYS_TYPES_H
-#  include <sys/types.h>
-#endif
-#if HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-#if HAVE_REGEX_H
-# include <regex.h>
-#endif
-#if HAVE_STDLIB_H
-# include <stdlib.h>
-#endif
-int main(void)
-{
-	regex_t blah;
-	if (regcomp(&blah, "foo.*bar", REG_NOSUB) != 0)
-		exit(1);
-	if (regexec(&blah, "foobar", 0, NULL, 0) != 0)
-		exit(1);
-	else
-		exit(0);
-
-	return 0;
-}
-                     ],
-                     tinyproxy_cv_regex_broken=no,
-                     tinyproxy_cv_regex_broken=yes,
-                     tinyproxy_cv_regex_broken=yes)])
-
-        AC_MSG_RESULT([$tinyproxy_cv_regex_broken])
-
-        if test x"$tinyproxy_cv_regex_broken" = x"yes" ; then
-            AC_MSG_ERROR([Your system's regexec() function is broken.])
-        fi
-    fi
 fi
 
 dnl
@@ -313,11 +283,31 @@ AC_SUBST(LIBS)
 AC_SUBST(ADDITIONAL_OBJECTS)
 
 # Check for xml tools
-AC_PATH_PROG(XMLLINT, xmllint, no)
-AM_CONDITIONAL(HAVE_XMLLINT, test "x$XMLLINT" != "xno")
 AC_PATH_PROG(XSLTPROC, xsltproc, no)
 AM_CONDITIONAL(HAVE_XSLTPROC, test "x$XSLTPROC" != "xno")
 
+<<<<<<< HEAD
+=======
+# Check for asciidoc
+AC_PATH_PROG(A2X, a2x, no)
+AM_CONDITIONAL(HAVE_A2X, test "x$A2X" != "xno")
+
+# checking xmllint
+AC_PATH_PROG(XMLLINT, xmllint, no)
+if test "x$XMLLINT" != "xno"; then
+  AS_ECHO_N("testing xmllint... ")
+  echo "TEST" > conftest.txt
+  if $A2X -f docbook conftest.txt 2>/dev/null; then
+    AS_ECHO("ok")
+  else
+    AS_ECHO("failed")
+    XMLLINT="no"
+  fi
+  rm -f conftest.txt conftest.xml
+fi
+AM_CONDITIONAL(HAVE_XMLLINT, test "x$XMLLINT" != "xno")
+
+>>>>>>> 1e934118104d73793f7b9f3dae43e7dcca74ff0e
 AC_CONFIG_FILES([
 Makefile
 src/Makefile
@@ -328,3 +318,20 @@ m4macros/Makefile
 ])
 
 AC_OUTPUT
+
+# the manpages are shipped in the release tarball and we don't want them to
+# get regenerated if a2x is not available. the intermediate files from
+# AC_CONFIG_FILES are created with config.status, which is created at configure
+# runtime, so we need to touch them after config.status terminated to prevent
+# make from rebuild them.
+
+if test "x$A2X" = "xno"; then
+  touch docs/man5/tinyproxy.conf.txt
+  touch docs/man8/tinyproxy.txt
+  if test -e docs/man5/tinyproxy.conf.5 ; then
+      touch docs/man5/tinyproxy.conf.5
+  fi
+  if test -e docs/man8/tinyproxy.8 ; then
+      touch docs/man8/tinyproxy.8
+  fi
+fi

@@ -36,8 +36,7 @@
 #include "conf.h"
 #include "remotefilter.h"
 
-static int listenfd;
-static socklen_t addrlen;
+static vector_t listen_fds;
 
 /*
  * Stores the internal data needed for each child (connection)
@@ -191,8 +190,13 @@ static void child_main (struct child_s *ptr)
         int connfd;
         struct sockaddr *cliaddr;
         socklen_t clilen;
+        fd_set rfds;
+        int maxfd = 0;
+        ssize_t i;
+        int ret;
 
-        cliaddr = (struct sockaddr *) safemalloc (addrlen);
+        cliaddr = (struct sockaddr *)
+                        safemalloc (sizeof(struct sockaddr_storage));
         if (!cliaddr) {
                 log_message (LOG_CRIT,
                              "Could not allocate memory for child address.");
@@ -200,16 +204,87 @@ static void child_main (struct child_s *ptr)
         }
 
         ptr->connects = 0;
+<<<<<<< HEAD
 	srand(time(NULL));
 
 #ifdef REMOTE_FILTER_ENABLE
 	remote_filter_init ();
 #endif /* REMOTE_FILTER_ENABLE */
+=======
+        srand(time(NULL));
+
+        /*
+         * We have to wait for connections on multiple fds,
+         * so use select.
+         */
+
+        FD_ZERO(&rfds);
+
+        for (i = 0; i < vector_length(listen_fds); i++) {
+                int *fd = (int *) vector_getentry(listen_fds, i, NULL);
+
+                ret = socket_nonblocking(*fd);
+                if (ret != 0) {
+                        log_message(LOG_ERR, "Failed to set the listening "
+                                    "socket %d to non-blocking: %s",
+                                    fd, strerror(errno));
+                        exit(1);
+                }
+
+                FD_SET(*fd, &rfds);
+                maxfd = max(maxfd, *fd);
+        }
+>>>>>>> 1e934118104d73793f7b9f3dae43e7dcca74ff0e
 
         while (!config.quit) {
+                int listenfd = -1;
+
                 ptr->status = T_WAITING;
 
-                clilen = addrlen;
+                clilen = sizeof(struct sockaddr_storage);
+
+                ret = select(maxfd + 1, &rfds, NULL, NULL, NULL);
+                if (ret == -1) {
+                        log_message (LOG_ERR, "error calling select: %s",
+                                     strerror(errno));
+                        exit(1);
+                } else if (ret == 0) {
+                        log_message (LOG_WARNING, "Strange: select returned 0 "
+                                     "but we did not specify a timeout...");
+                        continue;
+                }
+
+                for (i = 0; i < vector_length(listen_fds); i++) {
+                        int *fd = (int *) vector_getentry(listen_fds, i, NULL);
+
+                        if (FD_ISSET(*fd, &rfds)) {
+                                /*
+                                 * only accept the connection on the first
+                                 * fd that we find readable. - fair?
+                                 */
+                                listenfd = *fd;
+                                break;
+                        }
+                }
+
+                if (listenfd == -1) {
+                        log_message(LOG_WARNING, "Strange: None of our listen "
+                                    "fds was readable after select");
+                        continue;
+                }
+
+                ret = socket_blocking(listenfd);
+                if (ret != 0) {
+                        log_message(LOG_ERR, "Failed to set listening "
+                                    "socket %d to blocking for accept: %s",
+                                    listenfd, strerror(errno));
+                        exit(1);
+                }
+
+                /*
+                 * We have a socket that is readable.
+                 * Continue handling this connection.
+                 */
 
                 connfd = accept (listenfd, cliaddr, &clilen);
 
@@ -477,13 +552,66 @@ void child_kill_children (int sig)
         }
 }
 
-int child_listening_sock (uint16_t port)
+
+/**
+ * Listen on the various configured interfaces
+ */
+int child_listening_sockets(vector_t listen_addrs, uint16_t port)
 {
-        listenfd = listen_sock (port, &addrlen);
-        return listenfd;
+        int ret;
+        ssize_t i;
+
+        assert (port > 0);
+
+        if (listen_fds == NULL) {
+                listen_fds = vector_create();
+                if (listen_fds == NULL) {
+                        log_message (LOG_ERR, "Could not create the list "
+                                     "of listening fds");
+                        return -1;
+                }
+        }
+
+        if ((listen_addrs == NULL) ||
+            (vector_length(listen_addrs) == 0))
+        {
+                /*
+                 * no Listen directive:
+                 * listen on the wildcard address(es)
+                 */
+                ret = listen_sock(NULL, port, listen_fds);
+                return ret;
+        }
+
+        for (i = 0; i < vector_length(listen_addrs); i++) {
+                const char *addr;
+
+                addr = (char *)vector_getentry(listen_addrs, i, NULL);
+                if (addr == NULL) {
+                        log_message(LOG_WARNING,
+                                    "got NULL from listen_addrs - skipping");
+                        continue;
+                }
+
+                ret = listen_sock(addr, port, listen_fds);
+                if (ret != 0) {
+                        return ret;
+                }
+        }
+
+        return 0;
 }
 
 void child_close_sock (void)
 {
-        close (listenfd);
+        ssize_t i;
+
+        for (i = 0; i < vector_length(listen_fds); i++) {
+                int *fd = (int *) vector_getentry(listen_fds, i, NULL);
+                close (*fd);
+        }
+
+        vector_delete(listen_fds);
+
+        listen_fds = NULL;
 }
